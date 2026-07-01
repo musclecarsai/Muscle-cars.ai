@@ -8,6 +8,9 @@ import {
   incrementValuation, 
   incrementGuide, 
   logTransaction,
+  getUserByReferralCode,
+  createReferral,
+  getReferrals,
   type Car, 
   type User 
 } from "../lib/db";
@@ -16,6 +19,7 @@ import { Hero } from "../components/Hero";
 import { CarCard } from "../components/CarCard";
 import { GarageShop } from "../components/GarageShop";
 import { FreeResources } from "../components/FreeResources";
+import { ExpertInsights } from "../components/ExpertInsights";
 import { Pricing } from "../components/Pricing";
 import { Footer } from "../components/Footer";
 import { Paywall } from "../components/Paywall";
@@ -33,14 +37,23 @@ const CAR_IMAGES: Record<string, string> = {
 };
 
 const getPageData = createServerFn({ method: "GET" })
-  .validator((email: string | undefined) => email)
-  .handler(async ({ data: email }) => {
+  .validator((data: { email: string | undefined, ref: string | undefined }) => data)
+  .handler(async ({ data: { email, ref } }) => {
     const cars = await getCars();
     let user: User | null = null;
     if (email) {
-      user = await getUser(email);
+      const existingUser = await getUser(email);
+      user = existingUser;
       if (!user) {
         user = await createUser(email);
+        
+        // Handle referral for new user
+        if (ref) {
+          const referrer = await getUserByReferralCode(ref);
+          if (referrer && referrer.email !== email) {
+            await createReferral(referrer.id, email);
+          }
+        }
       }
     }
     return { cars, user };
@@ -71,10 +84,11 @@ export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>) => {
     return {
       email: (search.email as string) || undefined,
+      ref: (search.ref as string) || undefined,
     };
   },
-  loaderDeps: ({ search: { email } }) => ({ email }),
-  loader: ({ deps: { email } }) => getPageData({ data: email }),
+  loaderDeps: ({ search: { email, ref } }) => ({ email, ref }),
+  loader: ({ deps }) => getPageData({ data: deps }),
   component: Home,
 });
 
@@ -101,7 +115,12 @@ function Home() {
 
   const handleDownload = async () => {
     if (!user) {
-      alert("Please login first (add ?email=your@email.com to the URL)");
+      const email = prompt("Enter your email to receive your free guide:");
+      if (email && email.includes('@')) {
+        navigate({ search: { email } });
+        return;
+      }
+      alert("A valid email is required to access free guides.");
       return;
     }
 
@@ -128,6 +147,11 @@ function Home() {
 
     if (item.title === 'Verified Inspection') {
       navigate({ to: '/book-inspection', search: (prev) => prev });
+      return;
+    }
+
+    if (item.title === 'Featured Meet-up') {
+      navigate({ to: '/meets', search: (prev) => prev });
       return;
     }
 
@@ -229,6 +253,7 @@ function Home() {
         onDownload={handleDownload} 
         onViewPremium={() => navigate({ to: '/premium-library', search: (prev) => prev })}
       />
+      <ExpertInsights />
 
       {/* Portfolio/Management Section - Premium Look */}
       <section className="bg-charcoal py-32 relative overflow-hidden">

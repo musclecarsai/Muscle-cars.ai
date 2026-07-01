@@ -86,6 +86,21 @@ for (let attempt = 1; ; attempt++) {
             return new Response(result, { headers: { 'Content-Type': 'application/json' } });
         }
 
+        // PDF Download Route — serves the packaged Muscle Car Guides
+        if (pathname.startsWith("/downloads/") && pathname.endsWith(".pdf")) {
+          const filename = pathname.replace("/downloads/", "");
+          const pdfPath = `/home/team/shared/assets/guides/${filename}`;
+          const pdf = Bun.file(pdfPath);
+          if (await pdf.exists()) {
+            return new Response(pdf, {
+              headers: {
+                "Content-Type": "application/pdf",
+                "Content-Disposition": `attachment; filename="${filename}"`,
+              },
+            });
+          }
+        }
+
         if (pathname !== "/") {
           const file = Bun.file(CLIENT_DIR + pathname);
           if (await file.exists()) return new Response(file);

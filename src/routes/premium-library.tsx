@@ -12,7 +12,40 @@ import {
   type User,
   type Asset
 } from "../lib/db";
-import { BookOpen, Download, ShieldCheck, Lock, ShoppingCart, CheckCircle2 } from "lucide-react";
+import { BookOpen, Download, ShieldCheck, Lock, ShoppingCart, CheckCircle2, FileText } from "lucide-react";
+
+const FREE_GUIDES = [
+  {
+    id: "american-icons",
+    title: "American Icons",
+    subtitle: "The Complete Collector's Handbook",
+    description: "1960s buying guide + GTO restoration — covers the golden era of American muscle.",
+    pages: "8 pages",
+    features: ["1960s Buying Guide", "GTO Restoration", "Specs: Chevelle, GTO, Boss 429"],
+    filename: "american-icons.pdf",
+    coverImg: "/src/assets/ebook-covers/guide-american-icons.png"
+  },
+  {
+    id: "engine-mastery",
+    title: "Engine Mastery",
+    subtitle: "Build, Tune, Dominate",
+    description: "Engine tuning deep-dive + complete Hemi restoration bible for serious builders.",
+    pages: "8 pages",
+    features: ["Performance Tuning", "Hemi Restoration", "Specs: Hemi 'Cuda, Challenger R/T"],
+    filename: "engine-mastery.pdf",
+    coverImg: "/src/assets/ebook-covers/guide-engine-mastery.png"
+  },
+  {
+    id: "investment-grade",
+    title: "Investment Grade",
+    subtitle: "Valuation, Authentication, Portfolio Growth",
+    description: "Spot appreciating classics, avoid clones, and understand market trends for ROI.",
+    pages: "8 pages",
+    features: ["Investment Secrets", "Market Trends 2024", "Specs: Buick GNX"],
+    filename: "investment-grade.pdf",
+    coverImg: "/src/assets/ebook-covers/guide-investment-grade.png"
+  }
+];
 
 const PREMIUM_EBOOKS = [
   {
@@ -101,6 +134,21 @@ function PremiumLibrary() {
     }
   };
 
+  const handleDownloadFree = (guide: typeof FREE_GUIDES[0]) => {
+    if (!user) {
+      const email = prompt("Enter your email to receive your free guide:");
+      if (email && email.includes('@')) {
+        navigate({ search: { email } });
+        return;
+      }
+      alert("A valid email is required to access free guides.");
+      return;
+    }
+    
+    // In a real app, this would trigger the download
+    alert(`Downloading ${guide.title}...`);
+  };
+
   return (
     <div className="bg-charcoal min-h-screen text-white font-sans">
       <Navbar />
@@ -121,12 +169,78 @@ function PremiumLibrary() {
         </div>
       </div>
 
+      {/* Free Guides Section */}
+      <section className="py-24 bg-gradient-to-b from-charcoal to-dark-steel">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 bg-racing-red/10 text-racing-red px-4 py-1.5 rounded-full text-[10px] font-black mb-6 tracking-widest uppercase border border-racing-red/20">
+              FREE DOWNLOAD
+            </div>
+            <h2 className="text-5xl md:text-6xl font-black uppercase tracking-tighter italic mb-6">
+              Muscle Car <span className="text-gold">Guides</span>
+            </h2>
+            <p className="text-titanium text-xl max-w-2xl mx-auto leading-relaxed">
+              Professional-grade technical guides. No email required. Just pure, high-octane knowledge.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {FREE_GUIDES.map((guide) => (
+              <div key={guide.id} className="group bg-dark-steel rounded-3xl overflow-hidden border border-white/5 hover:border-gold/30 transition-all duration-500 shadow-2xl shadow-black/50 card-hover">
+                {/* Cover */}
+                <div className="relative h-80 overflow-hidden bg-gradient-to-b from-charcoal to-dark-steel">
+                  <img 
+                    src={guide.coverImg} 
+                    alt={guide.title}
+                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-dark-steel via-dark-steel/30 to-transparent" />
+                  <div className="absolute bottom-6 left-6 right-6">
+                    <div className="inline-block bg-gold text-charcoal text-[9px] font-black px-3 py-1 rounded-lg tracking-widest uppercase mb-3">
+                      {guide.pages}
+                    </div>
+                    <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">
+                      {guide.title}
+                    </h3>
+                    <p className="text-gold text-sm font-bold uppercase tracking-wider mt-1">
+                      {guide.subtitle}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Details */}
+                <div className="p-8">
+                  <p className="text-titanium text-sm leading-relaxed mb-6">
+                    {guide.description}
+                  </p>
+                  <div className="space-y-2 mb-8">
+                    {guide.features.map((feature, i) => (
+                      <div key={i} className="flex items-center gap-3 text-xs text-titanium/70">
+                        <div className="w-1.5 h-1.5 rounded-full bg-gold flex-shrink-0" />
+                        {feature}
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => handleDownloadFree(guide)}
+                    className="flex items-center justify-center gap-3 w-full bg-gold/10 text-gold border border-gold/30 hover:bg-gold hover:text-charcoal transition-all py-4 rounded-2xl font-black uppercase text-xs tracking-widest group"
+                  >
+                    <Download size={16} className="group-hover:animate-bounce" />
+                    DOWNLOAD FREE PDF
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Main Content */}
       <section className="py-24">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-12">
             {PREMIUM_EBOOKS.map((ebook) => {
-              const isPurchased = purchasedAssets.includes(ebook.title);
+              const isPurchased = purchasedAssets.includes(ebook.title) || (user && user.tier !== 'starter');
               
               return (
                 <div key={ebook.id} className="group relative">
@@ -203,7 +317,9 @@ function PremiumLibrary() {
                       {isPurchased && (
                         <button className="text-gold hover:text-white transition-colors flex items-center gap-1">
                           <Download size={12} />
-                          DOWNLOAD PDF
+                          <a href={`/downloads/${ebook.id === 'gto-restoration' ? 'american-icons' : ebook.id === 'engine-tuning' ? 'engine-mastery' : 'investment-grade'}.pdf`} download className="hover:text-white transition-colors">
+                            DOWNLOAD PDF
+                          </a>
                         </button>
                       )}
                     </div>

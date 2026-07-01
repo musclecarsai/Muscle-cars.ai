@@ -1,5 +1,5 @@
 import React from 'react';
-import { Zap, ShieldCheck, Camera, FileText, BarChart3, FileOutput, BookOpen } from 'lucide-react';
+import { Zap, ShieldCheck, Camera, FileText, BarChart3, FileOutput, BookOpen, Users } from 'lucide-react';
 
 const ADD_ONS = [
   {
@@ -31,6 +31,16 @@ const ADD_ONS = [
     icon: <Camera className="text-amber-glow" size={24} />,
     accent: "border-amber-glow",
     tag: "Enhancement"
+  },
+  {
+    title: "Featured Meet-up",
+    price: "$49.00",
+    headline: "Fill Every Stall in the Lot.",
+    description: "Promote your local car meet to the top of the community hub. Reach 5x more active collectors.",
+    image: "/src/assets/garage-shop/meetup-promotion-banner.png",
+    icon: <Users className="text-gold" size={24} />,
+    accent: "border-gold",
+    tag: "Community"
   },
   {
     title: "Verified Inspection",

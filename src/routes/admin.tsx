@@ -9,6 +9,8 @@ const getAdminData = createServerFn({ method: "GET" }).handler(async () => {
   const transactions = await teamDb("SELECT t.*, u.email FROM transactions t JOIN users u ON t.user_id = u.id ORDER BY t.created_at DESC");
   const cars = await teamDb("SELECT * FROM cars ORDER BY created_at DESC");
   const valuations = await teamDb("SELECT * FROM valuations");
+  const assets = await teamDb("SELECT a.*, u.email FROM assets a JOIN users u ON a.user_id = u.id ORDER BY a.created_at DESC");
+  const inspections = await teamDb("SELECT i.*, u.email FROM inspections i JOIN users u ON i.user_id = u.id ORDER BY i.created_at DESC");
 
   const totalUsers = users.length;
   const totalRevenue = transactions.reduce((acc: number, t: any) => acc + (t.amount_cents || 0), 0) / 100;
@@ -46,13 +48,18 @@ const getAdminData = createServerFn({ method: "GET" }).handler(async () => {
   const userConsumption = users.map((u: any) => {
     const userTransactions = transactions.filter((t: any) => t.user_id === u.id);
     const purchases = userTransactions.filter((t: any) => t.type === 'micro-transaction').map((t: any) => t.item_id);
+    const valLimit = u.tier === 'starter' ? 3 : (u.tier === 'enthusiast' ? 5 : Infinity);
+    const guideLimit = u.tier === 'starter' ? 3 : Infinity;
     
     return {
+      id: u.id,
       email: u.email,
       tier: u.tier,
       valuations: u.valuation_count,
       guides: u.guide_count,
-      isHittingLimits: u.tier === 'starter' && (u.valuation_count >= 3 || u.guide_count >= 3),
+      valLimit,
+      guideLimit,
+      isHittingLimits: (u.valuation_count >= valLimit) || (u.guide_count >= guideLimit),
       purchases
     };
   }).filter(u => u.isHittingLimits || u.purchases.length > 0);
@@ -73,24 +80,26 @@ const getAdminData = createServerFn({ method: "GET" }).handler(async () => {
       activeListings,
       valuationConversionRate: valuationConversionRate.toFixed(1),
       tierBreakdown,
-      transactionBreakdown: revenueBreakdown, // Use the more explicit breakdown
+      transactionBreakdown: revenueBreakdown,
       productAnalytics,
       projectedMRR,
+      totalAssets: assets.length,
+      totalInspections: inspections.length,
     },
     users,
     transactions,
     userConsumption,
+    assets,
+    inspections,
   };
 });
 
 const updateUser = createServerFn({ method: "POST" })
   .validator((data: { userId: string, tier: string, valuationCount: number, guideCount: number }) => data)
   .handler(async ({ data }) => {
-    // Simple sanitization for tier
     const validTiers = ['starter', 'enthusiast', 'entrepreneur', 'dealership'];
     const tier = validTiers.includes(data.tier) ? data.tier : 'starter';
-    
-    teamDb(`UPDATE users SET tier = '${tier}', valuation_count = ${data.valuationCount}, guide_count = ${data.guideCount} WHERE id = '${data.userId}'`);
+    await teamDb(`UPDATE users SET tier = '${tier}', valuation_count = ${data.valuationCount}, guide_count = ${data.guideCount} WHERE id = '${data.userId}'`);
     return { success: true };
   });
 
@@ -104,7 +113,7 @@ function AdminPortal() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "transactions" | "consumption" | "support">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "transactions" | "consumption" | "assets" | "support">("dashboard");
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,7 +159,7 @@ function AdminPortal() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-charcoal px-4 py-2 text-white focus:border-racing-red focus:outline-none"
+                className="w-full rounded-lg border border-white/10 bg-charcoal px-4 py-2 text-white focus:border-racing-red focus:outline-none font-mono"
                 required
               />
             </div>
@@ -185,12 +194,13 @@ function AdminPortal() {
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="flex h-20 items-center justify-between">
             <div className="flex items-center gap-8">
-              <h1 className="text-2xl font-black italic tracking-tighter">Admin <span className="text-racing-red">Dashboard</span></h1>
-              <div className="hidden md:flex items-center gap-1">
+              <h1 className="text-2xl font-black italic tracking-tighter cursor-pointer" onClick={() => setActiveTab("dashboard")}>Admin <span className="text-racing-red">Dashboard</span></h1>
+              <div className="hidden lg:flex items-center gap-1">
                 <TabButton active={activeTab === "dashboard"} onClick={() => setActiveTab("dashboard")}>Analytics</TabButton>
                 <TabButton active={activeTab === "users"} onClick={() => setActiveTab("users")}>Accounts</TabButton>
-                <TabButton active={activeTab === "consumption"} onClick={() => setActiveTab("consumption")}>Consumption</TabButton>
+                <TabButton active={activeTab === "consumption"} onClick={() => setActiveTab("consumption")}>Usage</TabButton>
                 <TabButton active={activeTab === "transactions"} onClick={() => setActiveTab("transactions")}>Revenue</TabButton>
+                <TabButton active={activeTab === "assets"} onClick={() => setActiveTab("assets")}>Assets</TabButton>
                 <TabButton active={activeTab === "support"} onClick={() => setActiveTab("support")}>Support</TabButton>
               </div>
             </div>
@@ -207,11 +217,12 @@ function AdminPortal() {
         </div>
       </nav>
 
-      <main className="mx-auto max-w-7xl px-6 py-12 lg:px-8 bg-carbon-fiber">
+      <main className="mx-auto max-w-7xl px-6 py-12 lg:px-8 bg-carbon-fiber min-h-screen">
         {activeTab === "dashboard" && <DashboardView data={data} />}
         {activeTab === "users" && <UsersView data={data} />}
         {activeTab === "consumption" && <ConsumptionView data={data} />}
         {activeTab === "transactions" && <TransactionsView data={data} />}
+        {activeTab === "assets" && <AssetsView data={data} />}
         {activeTab === "support" && <SupportView data={data} onUpdate={fetchData} />}
       </main>
     </div>
@@ -222,7 +233,7 @@ function TabButton({ children, active, onClick }: { children: React.ReactNode, a
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-2 text-xs font-black uppercase tracking-widest transition-all ${
+      className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all ${
         active ? 'text-white border-b-2 border-racing-red' : 'text-titanium hover:text-white'
       }`}
     >
@@ -239,13 +250,13 @@ function DashboardView({ data }: { data: any }) {
         <StatCard title="Total Users" value={data.stats.totalUsers} />
         <StatCard title="Gross Revenue" value={`$${(data.stats.totalRevenue || 0).toLocaleString()}`} />
         <StatCard title="Projected MRR" value={`$${(data.stats.projectedMRR || 0).toLocaleString()}`} />
-        <StatCard title="Active Listings" value={data.stats.activeListings} />
+        <StatCard title="Assets Generated" value={data.stats.totalAssets} />
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         {/* Tier Breakdown */}
         <div className="rounded-xl border border-white/5 bg-dark-steel p-8 shadow-2xl">
-          <h3 className="mb-6 text-sm font-black uppercase tracking-widest text-racing-red">Subscription Distribution</h3>
+          <h3 className="mb-6 text-sm font-black uppercase tracking-widest text-racing-red italic">Subscription Distribution</h3>
           <div className="space-y-4">
             {Object.entries(data.stats.tierBreakdown).map(([tier, count]: [any, any]) => (
               <div key={tier} className="flex items-center justify-between">
@@ -253,7 +264,7 @@ function DashboardView({ data }: { data: any }) {
                 <div className="flex items-center gap-4 flex-1 mx-4">
                   <div className="h-2 flex-1 rounded-full bg-charcoal overflow-hidden">
                     <div 
-                      className="h-full bg-racing-red" 
+                      className="h-full bg-racing-red shadow-[0_0_10px_rgba(220,38,38,0.5)]" 
                       style={{ width: `${(count / (data.stats.totalUsers || 1)) * 100}%` }}
                     ></div>
                   </div>
@@ -261,15 +272,12 @@ function DashboardView({ data }: { data: any }) {
                 <span className="text-sm font-black font-mono">{count}</span>
               </div>
             ))}
-            {Object.keys(data.stats.tierBreakdown).length === 0 && (
-              <p className="text-xs text-titanium italic text-center py-4">No users registered yet.</p>
-            )}
           </div>
         </div>
 
         {/* Transaction Breakdown */}
         <div className="rounded-xl border border-white/5 bg-dark-steel p-8 shadow-2xl">
-          <h3 className="mb-6 text-sm font-black uppercase tracking-widest text-racing-red">Revenue by Source</h3>
+          <h3 className="mb-6 text-sm font-black uppercase tracking-widest text-racing-red italic">Revenue by Source</h3>
           <div className="space-y-4">
             {Object.entries(data.stats.transactionBreakdown).map(([type, amount]: [any, any]) => (
               <div key={type} className="flex items-center justify-between">
@@ -285,29 +293,26 @@ function DashboardView({ data }: { data: any }) {
                 <span className="text-sm font-black font-mono text-emerald">${amount.toFixed(2)}</span>
               </div>
             ))}
-            {Object.keys(data.stats.transactionBreakdown).length === 0 && (
-              <p className="text-xs text-titanium italic text-center py-4">No transactions recorded.</p>
-            )}
           </div>
         </div>
 
         {/* Product Analytics */}
         <div className="rounded-xl border border-white/5 bg-dark-steel p-8 shadow-2xl lg:col-span-2">
-          <h3 className="mb-6 text-sm font-black uppercase tracking-widest text-racing-red">Product Performance</h3>
+          <h3 className="mb-6 text-sm font-black uppercase tracking-widest text-racing-red italic">Garage Shop Performance</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-charcoal text-[10px] uppercase text-titanium font-black tracking-widest">
+              <thead className="bg-charcoal text-[10px] uppercase text-titanium font-black tracking-widest border-b border-white/5">
                 <tr>
-                  <th className="px-6 py-4">Product</th>
-                  <th className="px-6 py-4 text-center">Sales</th>
+                  <th className="px-6 py-4">Product / Service</th>
+                  <th className="px-6 py-4 text-center">Volume</th>
                   <th className="px-6 py-4 text-right">Revenue</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {Object.entries(data.stats.productAnalytics).map(([item, stats]: [any, any]) => (
                   <tr key={item} className="hover:bg-white/5 transition-colors">
-                    <td className="px-6 py-4 font-black uppercase tracking-tight text-white">{item}</td>
-                    <td className="px-6 py-4 text-center font-mono">{stats.sales}</td>
+                    <td className="px-6 py-4 font-black uppercase tracking-tight text-white italic">{item}</td>
+                    <td className="px-6 py-4 text-center font-mono text-titanium">{stats.sales}</td>
                     <td className="px-6 py-4 text-right font-mono text-emerald font-black">${stats.revenue.toFixed(2)}</td>
                   </tr>
                 ))}
@@ -334,13 +339,13 @@ function UsersView({ data }: { data: any }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-black tracking-tight uppercase">User Registry</h2>
+        <h2 className="text-xl font-black tracking-tight uppercase italic">User Registry</h2>
         <input
           type="text"
-          placeholder="Search Registry..."
+          placeholder="Filter by Email..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="rounded-lg border border-white/10 bg-dark-steel px-4 py-2 text-sm text-white focus:border-racing-red focus:outline-none w-64"
+          className="rounded-lg border border-white/10 bg-dark-steel px-4 py-2 text-xs text-white focus:border-racing-red focus:outline-none w-64 font-mono"
         />
       </div>
       <div className="overflow-hidden rounded-xl border border-white/5 bg-dark-steel shadow-2xl">
@@ -358,24 +363,19 @@ function UsersView({ data }: { data: any }) {
             <tbody className="divide-y divide-white/5">
               {filteredUsers.map((user: any) => (
                 <tr key={user.id} className="hover:bg-white/5 transition-colors">
-                  <td className="px-6 py-4 font-medium text-white">{user.email}</td>
+                  <td className="px-6 py-4 font-medium text-white font-mono text-xs">{user.email}</td>
                   <td className="px-6 py-4">
                     <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-tighter ${
-                      user.tier === 'starter' ? 'bg-white/10 text-titanium' : 'bg-gold/10 text-gold'
+                      user.tier === 'starter' ? 'bg-white/10 text-titanium' : 'bg-gold/10 text-gold border border-gold/20'
                     }`}>
                       {user.tier}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-center text-titanium font-mono">{user.valuation_count}</td>
                   <td className="px-6 py-4 text-center text-titanium font-mono">{user.guide_count}</td>
-                  <td className="px-6 py-4 text-titanium text-xs">{new Date(user.created_at).toLocaleDateString()}</td>
+                  <td className="px-6 py-4 text-titanium text-[10px] uppercase font-black">{new Date(user.created_at).toLocaleDateString()}</td>
                 </tr>
               ))}
-              {filteredUsers.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-titanium italic text-xs uppercase tracking-widest">No users found.</td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
@@ -387,7 +387,7 @@ function UsersView({ data }: { data: any }) {
 function TransactionsView({ data }: { data: any }) {
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-black tracking-tight uppercase">Transaction Logs</h2>
+      <h2 className="text-xl font-black tracking-tight uppercase italic">Transaction Logs</h2>
       <div className="overflow-hidden rounded-xl border border-white/5 bg-dark-steel shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -395,34 +395,116 @@ function TransactionsView({ data }: { data: any }) {
               <tr>
                 <th className="px-6 py-4">Customer</th>
                 <th className="px-6 py-4">Type</th>
-                <th className="px-6 py-4">Amount</th>
-                <th className="px-6 py-4">Ref ID</th>
-                <th className="px-6 py-4">Date</th>
+                <th className="px-6 py-4">Item Details</th>
+                <th className="px-6 py-4 text-right">Amount</th>
+                <th className="px-6 py-4 text-center">Date</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {(data.transactions || []).map((tx: any) => (
                 <tr key={tx.id} className="hover:bg-white/5 transition-colors">
-                  <td className="px-6 py-4 font-medium text-white">{tx.email}</td>
-                  <td className="px-6 py-4 text-titanium uppercase text-[10px] font-black">{tx.type}</td>
-                  <td className="px-6 py-4 font-black text-emerald font-mono">
+                  <td className="px-6 py-4 font-medium text-white font-mono text-xs">{tx.email}</td>
+                  <td className="px-6 py-4">
+                    <span className={`text-[10px] font-black uppercase ${tx.type === 'subscription' ? 'text-gold' : 'text-titanium'}`}>
+                      {tx.type}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-white font-black uppercase italic text-xs truncate max-w-[200px]">{tx.item_id || 'N/A'}</td>
+                  <td className="px-6 py-4 text-right font-black text-emerald font-mono">
                     ${(tx.amount_cents / 100).toFixed(2)}
                   </td>
-                  <td className="px-6 py-4 text-titanium font-mono text-[10px] truncate max-w-[100px]">{tx.item_id || 'N/A'}</td>
-                  <td className="px-6 py-4 text-titanium text-xs">
+                  <td className="px-6 py-4 text-center text-titanium text-[10px] uppercase font-black">
                     {new Date(tx.created_at).toLocaleDateString()}
                   </td>
                 </tr>
               ))}
-              {data.transactions?.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-titanium italic text-xs uppercase tracking-widest">No transactions found in logs.</td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
       </div>
+    </div>
+  );
+}
+
+function AssetsView({ data }: { data: any }) {
+  return (
+    <div className="space-y-12">
+      <section className="space-y-6">
+        <h2 className="text-xl font-black tracking-tight uppercase italic">Generated Assets (AI Enhancement)</h2>
+        <div className="overflow-hidden rounded-xl border border-white/5 bg-dark-steel shadow-2xl">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-charcoal text-[10px] uppercase text-titanium font-black tracking-widest">
+                <tr>
+                  <th className="px-6 py-4">Customer</th>
+                  <th className="px-6 py-4">Asset Name</th>
+                  <th className="px-6 py-4">Type</th>
+                  <th className="px-6 py-4">Generated At</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {(data.assets || []).map((asset: any) => (
+                  <tr key={asset.id} className="hover:bg-white/5 transition-colors">
+                    <td className="px-6 py-4 font-mono text-xs text-titanium">{asset.email}</td>
+                    <td className="px-6 py-4 font-black uppercase italic text-white">{asset.name}</td>
+                    <td className="px-6 py-4">
+                      <span className="rounded bg-white/5 px-2 py-0.5 text-[10px] font-black uppercase text-titanium">
+                        {asset.type}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-titanium text-[10px] uppercase font-black">
+                      {new Date(asset.created_at).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-6">
+        <h2 className="text-xl font-black tracking-tight uppercase italic text-gold">Physical Inspection Requests</h2>
+        <div className="overflow-hidden rounded-xl border border-white/5 bg-dark-steel shadow-2xl">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-charcoal text-[10px] uppercase text-titanium font-black tracking-widest border-b border-gold/10">
+                <tr>
+                  <th className="px-6 py-4">Requester</th>
+                  <th className="px-6 py-4">Location</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4 text-center">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {(data.inspections || []).map((insp: any) => (
+                  <tr key={insp.id} className="hover:bg-white/5 transition-colors">
+                    <td className="px-6 py-4 font-mono text-xs text-titanium">{insp.email}</td>
+                    <td className="px-6 py-4 text-white font-medium italic">{insp.location}</td>
+                    <td className="px-6 py-4">
+                      <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-tighter ${
+                        insp.status === 'completed' ? 'bg-emerald/10 text-emerald border border-emerald/20' : 
+                        insp.status === 'scheduled' ? 'bg-gold/10 text-gold border border-gold/20' : 
+                        'bg-racing-red/10 text-racing-red border border-racing-red/20'
+                      }`}>
+                        {insp.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center text-titanium text-[10px] uppercase font-black">
+                      {new Date(insp.created_at).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+                {data.inspections?.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-12 text-center text-titanium italic text-xs uppercase tracking-widest">No inspection bookings found.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
@@ -460,14 +542,14 @@ function SupportView({ data, onUpdate }: { data: any, onUpdate: () => void }) {
 
   return (
     <div className="max-w-2xl mx-auto space-y-8">
-      <h2 className="text-xl font-black tracking-tight uppercase text-center">Support Overrides</h2>
+      <h2 className="text-xl font-black tracking-tight uppercase text-center italic">Support Overrides</h2>
       <div className="rounded-xl border border-white/5 bg-dark-steel p-8 shadow-2xl space-y-6">
         <div>
-          <label className="mb-2 block text-xs font-black uppercase tracking-widest text-titanium">Select Target Account</label>
+          <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-titanium">Select Target Account</label>
           <select 
             value={selectedUserId} 
             onChange={(e) => setSelectedUserId(e.target.value)}
-            className="w-full rounded-lg border border-white/10 bg-charcoal px-4 py-2 text-white focus:border-racing-red focus:outline-none"
+            className="w-full rounded-lg border border-white/10 bg-charcoal px-4 py-2 text-white focus:border-racing-red focus:outline-none font-mono text-sm"
           >
             <option value="">Choose User...</option>
             {data.users?.map((u: any) => (
@@ -484,7 +566,7 @@ function SupportView({ data, onUpdate }: { data: any, onUpdate: () => void }) {
                 <select 
                   value={tier} 
                   onChange={(e) => setTier(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-charcoal px-3 py-1.5 text-xs text-white focus:border-racing-red focus:outline-none"
+                  className="w-full rounded-lg border border-white/10 bg-charcoal px-3 py-1.5 text-xs text-white focus:border-racing-red focus:outline-none font-black uppercase"
                 >
                   <option value="starter">Starter</option>
                   <option value="enthusiast">Enthusiast</option>
@@ -498,7 +580,7 @@ function SupportView({ data, onUpdate }: { data: any, onUpdate: () => void }) {
                   type="number" 
                   value={valCount} 
                   onChange={(e) => setValCount(Number(e.target.value))}
-                  className="w-full rounded-lg border border-white/10 bg-charcoal px-3 py-1.5 text-xs text-white focus:border-racing-red focus:outline-none"
+                  className="w-full rounded-lg border border-white/10 bg-charcoal px-3 py-1.5 text-xs text-white focus:border-racing-red focus:outline-none font-mono font-black"
                 />
               </div>
               <div>
@@ -507,14 +589,14 @@ function SupportView({ data, onUpdate }: { data: any, onUpdate: () => void }) {
                   type="number" 
                   value={guideCount} 
                   onChange={(e) => setGuideCount(Number(e.target.value))}
-                  className="w-full rounded-lg border border-white/10 bg-charcoal px-3 py-1.5 text-xs text-white focus:border-racing-red focus:outline-none"
+                  className="w-full rounded-lg border border-white/10 bg-charcoal px-3 py-1.5 text-xs text-white focus:border-racing-red focus:outline-none font-mono font-black"
                 />
               </div>
             </div>
             <button
               type="submit"
               disabled={updating}
-              className="w-full rounded-lg bg-emerald py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-emerald/90 transition-colors disabled:opacity-50"
+              className="w-full rounded-lg bg-emerald py-3 text-xs font-black uppercase tracking-widest text-white hover:bg-emerald/90 transition-colors disabled:opacity-50 shadow-lg shadow-emerald/20"
             >
               {updating ? 'Applying Overrides...' : 'Commit Changes'}
             </button>
@@ -526,15 +608,15 @@ function SupportView({ data, onUpdate }: { data: any, onUpdate: () => void }) {
 }
 
 function StatCard({ title, value }: { title: string; value: string | number }) {
-  // Defensive rendering for Error #310
   const displayValue = (typeof value === 'object' && value !== null) 
     ? JSON.stringify(value) 
     : String(value ?? '0');
 
   return (
-    <div className="rounded-xl border border-white/5 bg-dark-steel p-6 shadow-2xl group hover:border-racing-red/30 transition-all card-accent">
-      <p className="mb-2 text-xs font-black uppercase tracking-widest text-titanium group-hover:text-racing-red transition-colors">{title}</p>
-      <p className="text-3xl font-black text-white font-mono tracking-tighter">{displayValue}</p>
+    <div className="rounded-xl border border-white/5 bg-dark-steel p-6 shadow-2xl group hover:border-racing-red/30 transition-all card-accent relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-16 h-16 bg-racing-red/5 -rotate-45 translate-x-8 -translate-y-8 group-hover:bg-racing-red/10 transition-colors" />
+      <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-titanium group-hover:text-racing-red transition-colors relative z-10">{title}</p>
+      <p className="text-3xl font-black text-white font-mono tracking-tighter relative z-10 italic">{displayValue}</p>
     </div>
   );
 }
@@ -543,9 +625,9 @@ function ConsumptionView({ data }: { data: any }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-black tracking-tight uppercase">User Consumption & Limit Tracking</h2>
-        <div className="bg-racing-red/10 border border-racing-red/20 px-4 py-2 rounded-lg text-[10px] font-black uppercase text-racing-red tracking-widest">
-          {data.userConsumption?.filter((u: any) => u.isHittingLimits).length} Users At Free Tier Limits
+        <h2 className="text-xl font-black tracking-tight uppercase italic">Limit Enforcement Tracker</h2>
+        <div className="bg-racing-red/10 border border-racing-red/20 px-4 py-2 rounded-lg text-[10px] font-black uppercase text-racing-red tracking-widest animate-pulse">
+          {data.userConsumption?.filter((u: any) => u.isHittingLimits).length} High-Conversion Targets (At Limit)
         </div>
       </div>
 
@@ -556,44 +638,48 @@ function ConsumptionView({ data }: { data: any }) {
               <tr>
                 <th className="px-6 py-4">Customer</th>
                 <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-center">Valuations (Used/3)</th>
-                <th className="px-6 py-4 text-center">Guides (Used/3)</th>
-                <th className="px-6 py-4">Add-on Purchases</th>
+                <th className="px-6 py-4 text-center">Valuation Consumption</th>
+                <th className="px-6 py-4 text-center">Guide Consumption</th>
+                <th className="px-6 py-4">Garage Shop Purchases</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {data.userConsumption?.map((u: any, idx: number) => (
                 <tr key={idx} className="hover:bg-white/5 transition-colors">
-                  <td className="px-6 py-4 font-medium text-white">{u.email}</td>
+                  <td className="px-6 py-4 font-medium text-white font-mono text-xs">{u.email}</td>
                   <td className="px-6 py-4">
                     {u.isHittingLimits ? (
-                      <span className="rounded-full bg-racing-red/10 text-racing-red px-2.5 py-0.5 text-[10px] font-black uppercase tracking-tighter border border-racing-red/20">
-                        At Limit
+                      <span className="rounded-full bg-racing-red/10 text-racing-red px-2.5 py-0.5 text-[10px] font-black uppercase tracking-tighter border border-racing-red/20 italic">
+                        Limit Reached
                       </span>
                     ) : (
-                      <span className="rounded-full bg-emerald/10 text-emerald px-2.5 py-0.5 text-[10px] font-black uppercase tracking-tighter border border-emerald/20">
-                        Active
+                      <span className="rounded-full bg-emerald/10 text-emerald px-2.5 py-0.5 text-[10px] font-black uppercase tracking-tighter border border-emerald/20 italic">
+                        Active Flow
                       </span>
                     )}
                   </td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex flex-col items-center gap-1">
-                      <span className={`font-mono ${u.valuations >= 3 ? 'text-racing-red font-black' : 'text-titanium'}`}>{u.valuations}</span>
-                      <div className="w-16 h-1 bg-charcoal rounded-full overflow-hidden">
+                      <span className={`font-mono text-xs font-black ${u.valuations >= u.valLimit ? 'text-racing-red' : 'text-titanium'}`}>
+                        {u.valuations} / {u.valLimit === Infinity ? '∞' : u.valLimit}
+                      </span>
+                      <div className="w-24 h-1 bg-charcoal rounded-full overflow-hidden">
                         <div
-                          className={`h-full ${u.valuations >= 3 ? 'bg-racing-red' : 'bg-titanium'}`}
-                          style={{ width: `${Math.min((u.valuations / 3) * 100, 100)}%` }}
+                          className={`h-full ${u.valuations >= u.valLimit ? 'bg-racing-red shadow-[0_0_8px_red]' : 'bg-titanium'}`}
+                          style={{ width: `${Math.min((u.valuations / (u.valLimit === Infinity ? 100 : u.valLimit)) * 100, 100)}%` }}
                         />
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex flex-col items-center gap-1">
-                      <span className={`font-mono ${u.guides >= 3 ? 'text-racing-red font-black' : 'text-titanium'}`}>{u.guides}</span>
-                      <div className="w-16 h-1 bg-charcoal rounded-full overflow-hidden">
+                      <span className={`font-mono text-xs font-black ${u.guides >= u.guideLimit ? 'text-racing-red' : 'text-titanium'}`}>
+                        {u.guides} / {u.guideLimit === Infinity ? '∞' : u.guideLimit}
+                      </span>
+                      <div className="w-24 h-1 bg-charcoal rounded-full overflow-hidden">
                         <div
-                          className={`h-full ${u.guides >= 3 ? 'bg-racing-red' : 'bg-titanium'}`}
-                          style={{ width: `${Math.min((u.guides / 3) * 100, 100)}%` }}
+                          className={`h-full ${u.guides >= u.guideLimit ? 'bg-racing-red shadow-[0_0_8px_red]' : 'bg-titanium'}`}
+                          style={{ width: `${Math.min((u.guides / (u.guideLimit === Infinity ? 100 : u.guideLimit)) * 100, 100)}%` }}
                         />
                       </div>
                     </div>
@@ -602,22 +688,17 @@ function ConsumptionView({ data }: { data: any }) {
                     <div className="flex flex-wrap gap-1">
                       {u.purchases.length > 0 ? (
                         u.purchases.map((p: string, pIdx: number) => (
-                          <span key={pIdx} className="bg-amber-glow/10 text-amber-glow px-2 py-0.5 rounded text-[9px] font-black uppercase border border-amber-glow/20">
+                          <span key={pIdx} className="bg-gold/10 text-gold px-2 py-0.5 rounded text-[9px] font-black uppercase border border-gold/20 italic">
                             {p}
                           </span>
                         ))
                       ) : (
-                        <span className="text-titanium text-[10px] italic">None</span>
+                        <span className="text-titanium text-[10px] italic">No transactions</span>
                       )}
                     </div>
                   </td>
                 </tr>
               ))}
-              {(!data.userConsumption || data.userConsumption.length === 0) && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-titanium italic text-xs uppercase tracking-widest">No users currently tracking consumption or purchases.</td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>

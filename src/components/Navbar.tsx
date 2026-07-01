@@ -15,9 +15,21 @@ export const Navbar = () => {
             Marketplace
             <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-racing-red transition-all group-hover:w-full" />
           </a>
+          <a href="/articles" className="hover:text-white transition-colors relative group">
+            Articles
+            <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-racing-red transition-all group-hover:w-full" />
+          </a>
           <a href="/premium-library" className="hover:text-white transition-colors relative group">
             Library
             <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-gold transition-all group-hover:w-full" />
+          </a>
+          <a href="/meets" className="hover:text-white transition-colors relative group">
+            Meetups
+            <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-gold transition-all group-hover:w-full" />
+          </a>
+          <a href="/referral" className="hover:text-white transition-colors relative group">
+            Referrals
+            <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-racing-red transition-all group-hover:w-full" />
           </a>
           <a href="#" className="hover:text-white transition-colors relative group">
             Valuation
@@ -34,9 +46,9 @@ export const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-6">
-          <button className="hidden md:block bg-racing-red px-6 py-2.5 rounded-lg font-black uppercase text-[10px] tracking-widest hover:bg-racing-red-light transition-all shadow-lg shadow-racing-red/20">
+          <a href="/sell" className="hidden md:block bg-racing-red px-6 py-2.5 rounded-lg font-black uppercase text-[10px] tracking-widest hover:bg-racing-red-light transition-all shadow-lg shadow-racing-red/20">
             Sell Vehicle
-          </button>
+          </a>
           <div className="w-10 h-10 rounded-full bg-dark-steel border border-white/10 flex items-center justify-center cursor-pointer hover:border-gold/50 transition-colors group">
             <User size={18} className="text-titanium group-hover:text-gold transition-colors" />
           </div>
