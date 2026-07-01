@@ -1,0 +1,30 @@
+$ vite build
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 1926 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/client/assets/app-T9FobXLB.css    42.29 kB │ gzip:   7.34 kB
+dist/client/assets/admin-Dqgr0Y-0.js    0.22 kB │ gzip:   0.21 kB
+dist/client/assets/index-BMshbwFk.js   34.12 kB │ gzip:   9.95 kB
+dist/client/assets/index-_01WFloW.js  325.59 kB │ gzip: 104.43 kB
+✓ built in 7.90s
+vite v7.3.6 building ssr environment for production...
+transforming...
+"default" is imported from external module "react" but never used in "src/components/Navbar.tsx", "src/components/Hero.tsx", "src/components/CarCard.tsx", "src/components/Footer.tsx", "src/components/FreeResources.tsx", "src/components/Pricing.tsx", "src/components/GarageShop.tsx" and "src/components/Paywall.tsx".
+"createRequestHandler", "defineHandlerCallback", "transformPipeableStreamWithRouter" and "transformReadableStreamWithRouter" are imported from external module "@tanstack/router-core/ssr/server" but never used in "node_modules/@tanstack/start-server-core/dist/esm/index.js".
+"RawStream" is imported from external module "@tanstack/router-core" but never used in "node_modules/@tanstack/start-client-core/dist/esm/index.js".
+"hydrate" and "json" are imported from external module "@tanstack/router-core/ssr/client" but never used in "node_modules/@tanstack/start-client-core/dist/esm/index.js".
+✓ 72 modules transformed.
+rendering chunks...
+dist/server/assets/start-HYkvq4Ni.js                        0.06 kB
+dist/server/assets/empty-plugin-adapters-BFgPZ6_d.js        0.13 kB
+dist/server/assets/createServerRpc-D_-6bKnO.js              0.30 kB
+dist/server/assets/_tanstack-start-manifest_v-B4ErDNxz.js   0.59 kB
+dist/server/assets/admin-DHzDA_2y.js                        0.72 kB
+dist/server/assets/admin-CIU2S6uz.js                        0.92 kB
+dist/server/assets/router-CvZ8hsik.js                       3.59 kB
+dist/server/assets/index-BpC4X1hm.js                        4.20 kB
+dist/server/assets/index-D74Z_1qV.js                       39.90 kB
+dist/server/server.js                                      66.01 kB
+✓ built in 1.48s

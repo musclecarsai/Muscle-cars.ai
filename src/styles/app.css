@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand Colors */
+  --color-charcoal: #1A1A1A;
+  --color-dark-steel: #2D2D2D;
+  --color-carbon: #222222;
+  --color-racing-red: #D42020;
+  --color-racing-red-light: #E03030;
+  --color-gold: #C9A84C;
+  --color-gold-light: #DDBE5E;
+  --color-titanium: #B0B0B0;
+  --color-amber-glow: #FF8C00;
+  --color-emerald: #1B8A4B;
+  --color-deep-blue: #1A3A6B;
+
+  /* Typography */
+  --font-heading: "Oswald", "Impact", "Arial Black", sans-serif;
+  --font-body: "Inter", "Roboto", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+}
+
+@layer base {
+  html,
+  body {
+    @apply bg-charcoal text-gray-100 antialiased;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    @apply font-bold tracking-tight uppercase;
+  }
+}
+
+/* Glassmorphism overlay for locked/pro features */
+.glass-overlay {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(26, 26, 26, 0.6);
+}
+
+/* Gold shimmer animation for premium CTAs */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.gold-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-gold) 0%,
+    var(--color-gold-light) 40%,
+    var(--color-gold) 80%
+  );
+  background-size: 200% auto;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* Premium card hover effect */
+.card-hover {
+  @apply transition-all duration-300 ease-out;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(212, 32, 32, 0.15);
+}
+
+/* Red accent border top for cards */
+.card-accent {
+  @apply border-t-2 border-racing-red rounded-xl bg-dark-steel;
+}
+
+/* Grid pattern background */
+.bg-carbon-fiber {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-charcoal;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-dark-steel rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-titanium/30;
+}
