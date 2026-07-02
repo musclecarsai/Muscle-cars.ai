@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "build": "NITRO_PRESET=netlify vite build",
     "start": "bun run serve.ts",
     "publish": "bash ./publish.sh",
     "format": "prettier --write ."

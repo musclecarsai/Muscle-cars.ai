@@ -23,7 +23,7 @@ const GUIDES = [
 ];
 
 interface FreeResourcesProps {
-  onDownload?: () => void;
+  onDownload?: (guideTitle: string) => void;
   onViewPremium?: () => void;
 }
 
@@ -77,7 +77,7 @@ export const FreeResources = ({ onDownload, onViewPremium }: FreeResourcesProps)
                   </p>
                   
                   <button 
-                    onClick={() => onDownload?.()}
+                    onClick={() => onDownload?.(guide.title)}
                     className="flex items-center gap-3 text-white font-black uppercase text-xs tracking-widest bg-racing-red hover:bg-racing-red-light px-6 py-4 rounded-lg transition-all w-full justify-center shadow-lg shadow-racing-red/20"
                   >
                     <Download size={16} />

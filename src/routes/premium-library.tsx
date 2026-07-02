@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
+import { EmailCaptureModal } from "../components/EmailCaptureModal";
 import { 
   getUser, 
   createUser, 
@@ -23,27 +24,30 @@ const FREE_GUIDES = [
     pages: "8 pages",
     features: ["1960s Buying Guide", "GTO Restoration", "Specs: Chevelle, GTO, Boss 429"],
     filename: "american-icons.pdf",
-    coverImg: "/src/assets/ebook-covers/guide-american-icons.png"
+    coverImg: "/src/assets/ebook-covers/guide-american-icons.png",
+    leadMagnetImg: null
   },
   {
-    id: "engine-mastery",
-    title: "Engine Mastery",
-    subtitle: "Build, Tune, Dominate",
-    description: "Engine tuning deep-dive + complete Hemi restoration bible for serious builders.",
-    pages: "8 pages",
-    features: ["Performance Tuning", "Hemi Restoration", "Specs: Hemi 'Cuda, Challenger R/T"],
+    id: "hemi-restoration",
+    title: "The Hemi Restoration Bible",
+    subtitle: "Mopar's Most Legendary Powerplant",
+    description: "Complete Hemi engine restoration guide — identification, components, authenticity, and first-start procedures.",
+    pages: "Free Chapter",
+    features: ["426 Hemi Identification", "Component-Specific Build", "Concours Authenticity"],
     filename: "engine-mastery.pdf",
-    coverImg: "/src/assets/ebook-covers/guide-engine-mastery.png"
+    coverImg: "/src/assets/marketing/lead-magnet-hemi-restoration.png",
+    leadMagnetImg: "lead-magnet-hemi-restoration.png"
   },
   {
-    id: "investment-grade",
-    title: "Investment Grade",
-    subtitle: "Valuation, Authentication, Portfolio Growth",
-    description: "Spot appreciating classics, avoid clones, and understand market trends for ROI.",
-    pages: "8 pages",
-    features: ["Investment Secrets", "Market Trends 2024", "Specs: Buick GNX"],
+    id: "investment-secrets",
+    title: "Muscle Car Investment Secrets",
+    subtitle: "Spot Appreciating Classics",
+    description: "Avoid clones, identify future classics, and build a portfolio that outperforms the market.",
+    pages: "Free Chapter",
+    features: ["Three Pillars of Value", "Spotting Clones", "Future Classics Watchlist"],
     filename: "investment-grade.pdf",
-    coverImg: "/src/assets/ebook-covers/guide-investment-grade.png"
+    coverImg: "/src/assets/marketing/lead-magnet-investment-secrets.png",
+    leadMagnetImg: "lead-magnet-investment-secrets.png"
   }
 ];
 
@@ -106,6 +110,7 @@ function PremiumLibrary() {
   const { user, purchasedAssets } = Route.useLoaderData();
   const navigate = useNavigate({ from: "/premium-library" });
   const [processing, setProcessing] = useState<string | null>(null);
+  const [emailCapture, setEmailCapture] = useState<{ open: boolean, guideTitle: string }>({ open: false, guideTitle: "" });
 
   const handlePurchase = async (ebook: typeof PREMIUM_EBOOKS[0]) => {
     if (!user) {
@@ -136,17 +141,11 @@ function PremiumLibrary() {
 
   const handleDownloadFree = (guide: typeof FREE_GUIDES[0]) => {
     if (!user) {
-      const email = prompt("Enter your email to receive your free guide:");
-      if (email && email.includes('@')) {
-        navigate({ search: { email } });
-        return;
-      }
-      alert("A valid email is required to access free guides.");
+      setEmailCapture({ open: true, guideTitle: guide.title });
       return;
     }
     
-    // In a real app, this would trigger the download
-    alert(`Downloading ${guide.title}...`);
+    alert(`Success! "${guide.title}" is being sent to your email and added to your portfolio.`);
   };
 
   return (
@@ -169,6 +168,16 @@ function PremiumLibrary() {
         </div>
       </div>
 
+      <EmailCaptureModal 
+        isOpen={emailCapture.open}
+        onClose={() => setEmailCapture({ ...emailCapture, open: false })}
+        guideTitle={emailCapture.guideTitle}
+        onSuccess={(email) => {
+          setEmailCapture({ ...emailCapture, open: false });
+          navigate({ search: (prev) => ({ ...prev, email }) });
+        }}
+      />
+
       {/* Free Guides Section */}
       <section className="py-24 bg-gradient-to-b from-charcoal to-dark-steel">
         <div className="container mx-auto px-4">
@@ -180,7 +189,7 @@ function PremiumLibrary() {
               Muscle Car <span className="text-gold">Guides</span>
             </h2>
             <p className="text-titanium text-xl max-w-2xl mx-auto leading-relaxed">
-              Professional-grade technical guides. No email required. Just pure, high-octane knowledge.
+              Professional-grade technical guides. Master restoration and investment strategy.
             </p>
           </div>
 

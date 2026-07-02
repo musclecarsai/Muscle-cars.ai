@@ -96,8 +96,10 @@ export async function incrementValuation(userId: string): Promise<void> {
   await teamDb(`UPDATE users SET valuation_count = valuation_count + 1 WHERE id = '${userId}'`);
 }
 
-export async function incrementGuide(userId: string): Promise<void> {
+export async function incrementGuide(userId: string, guideTitle: string): Promise<void> {
   await teamDb(`UPDATE users SET guide_count = guide_count + 1 WHERE id = '${userId}'`);
+  const filename = guideTitle.toLowerCase().replace(/ /g, '-').replace(/[^a-z-]/g, '') + '.pdf';
+  await addAsset(userId, guideTitle, 'ebook', `/downloads/${filename}`);
 }
 
 export async function logTransaction(userId: string, type: string, itemId: string, amountCents: number): Promise<void> {

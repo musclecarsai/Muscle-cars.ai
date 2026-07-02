@@ -101,6 +101,27 @@ for (let attempt = 1; ; attempt++) {
           }
         }
 
+        // Marketing Asset Download Route
+        if (pathname.startsWith("/marketing/")) {
+          const filename = pathname.replace("/marketing/", "");
+          const assetPath = `/home/team/shared/assets/marketing/${filename}`;
+          const asset = Bun.file(assetPath);
+          if (await asset.exists()) {
+            const ext = filename.split('.').pop()?.toLowerCase();
+            const mimeTypes: Record<string, string> = {
+              'pdf': 'application/pdf',
+              'png': 'image/png',
+              'jpg': 'image/jpeg',
+              'jpeg': 'image/jpeg',
+            };
+            return new Response(asset, {
+              headers: {
+                "Content-Type": mimeTypes[ext || ''] || 'application/octet-stream',
+              },
+            });
+          }
+        }
+
         if (pathname !== "/") {
           const file = Bun.file(CLIENT_DIR + pathname);
           if (await file.exists()) return new Response(file);

@@ -23,6 +23,7 @@ import { ExpertInsights } from "../components/ExpertInsights";
 import { Pricing } from "../components/Pricing";
 import { Footer } from "../components/Footer";
 import { Paywall } from "../components/Paywall";
+import { EmailCaptureModal } from "../components/EmailCaptureModal";
 import { Search, Lock } from "lucide-react";
 
 // Asset mapping for placeholders
@@ -67,9 +68,9 @@ const incrementValuationFn = createServerFn({ method: "POST" })
   });
 
 const incrementGuideFn = createServerFn({ method: "POST" })
-  .validator((userId: string) => userId)
-  .handler(async ({ data: userId }) => {
-    await incrementGuide(userId);
+  .validator((data: { userId: string, guideTitle: string }) => data)
+  .handler(async ({ data: { userId, guideTitle } }) => {
+    await incrementGuide(userId, guideTitle);
     return { success: true };
   });
 
@@ -96,6 +97,7 @@ function Home() {
   const { cars, user } = Route.useLoaderData();
   const navigate = useNavigate({ from: '/' });
   const [paywall, setPaywall] = useState<{ open: boolean, type: 'valuation' | 'guide' }>({ open: false, type: 'valuation' });
+  const [emailCapture, setEmailCapture] = useState<{ open: boolean, guideTitle: string }>({ open: false, guideTitle: "" });
 
   const handleAnalyze = async () => {
     if (!user) {
@@ -113,14 +115,9 @@ function Home() {
     navigate({ search: (prev) => prev }); // Refresh data
   };
 
-  const handleDownload = async () => {
+  const handleDownload = async (guideTitle: string) => {
     if (!user) {
-      const email = prompt("Enter your email to receive your free guide:");
-      if (email && email.includes('@')) {
-        navigate({ search: { email } });
-        return;
-      }
-      alert("A valid email is required to access free guides.");
+      setEmailCapture({ open: true, guideTitle });
       return;
     }
 
@@ -130,7 +127,7 @@ function Home() {
     }
 
     await incrementGuideFn({ data: user.id });
-    alert("Guide download started!");
+    alert(`Success! "${guideTitle}" is now available in your portfolio.`);
     navigate({ search: (prev) => prev }); // Refresh data
   };
 
@@ -207,6 +204,16 @@ function Home() {
           : "You've downloaded your 3 free guides. Upgrade to Enthusiast to unlock our entire premium library of technical manuals."
         }
         feature={paywall.type === 'valuation' ? "AI VALUATION" : "PREMIUM GUIDES"}
+      />
+
+      <EmailCaptureModal 
+        isOpen={emailCapture.open}
+        onClose={() => setEmailCapture({ ...emailCapture, open: false })}
+        guideTitle={emailCapture.guideTitle}
+        onSuccess={(email) => {
+          setEmailCapture({ ...emailCapture, open: false });
+          navigate({ search: (prev) => ({ ...prev, email }) });
+        }}
       />
 
       {/* Marketplace Section */}
