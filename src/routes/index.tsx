@@ -11,6 +11,7 @@ import {
   getUserByReferralCode,
   createReferral,
   getReferrals,
+  getListingCap,
   type Car, 
   type User 
 } from "../lib/db";
@@ -197,9 +198,10 @@ function Home() {
       <Navbar />
       
       {user && (
-        <div className="bg-racing-red text-white py-2 text-center text-xs font-black uppercase tracking-[0.2em] flex justify-center gap-8 border-b border-white/10">
+        <div className="bg-racing-red text-white py-2 text-center text-xs font-black uppercase tracking-[0.2em] flex justify-center gap-6 border-b border-white/10">
           <span>AUTHENTICATED: {user.email}</span>
           <span className="text-gold">TIER: {user.tier}</span>
+          <span className="opacity-80">LISTINGS: {user.listing_count || 0}/{user.tier === 'professional' || user.tier === 'dealership' ? '∞' : getListingCap(user.tier)}</span>
           <span className="opacity-80">FREE VALUATIONS: {user.tier === 'starter' ? Math.max(0, 3 - user.valuation_count) : 'UNLIMITED'}</span>
           <span className="opacity-80">FREE GUIDES: {user.tier === 'starter' ? Math.max(0, 3 - user.guide_count) : 'UNLIMITED'}</span>
         </div>

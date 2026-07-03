@@ -7,9 +7,12 @@ import {
   getUser, 
   createUser, 
   addCar,
+  getRemainingListings,
+  getListingCap,
+  calcTransactionFee,
   type User 
 } from "../lib/db";
-import { Car, DollarSign, Tag, Info, Gauge, Calendar } from "lucide-react";
+import { Car, DollarSign, Tag, Info, Gauge, Calendar, AlertTriangle, TrendingUp } from "lucide-react";
 
 const getPageData = createServerFn({ method: "GET" })
   .validator((email: string | undefined) => email)
@@ -27,8 +30,7 @@ const getPageData = createServerFn({ method: "GET" })
 const addCarFn = createServerFn({ method: "POST" })
   .validator((data: { ownerId: string, make: string, model: string, year: number, price: number, mileage: number, description: string }) => data)
   .handler(async ({ data }) => {
-    await addCar(data.ownerId, data.make, data.model, data.year, data.price, data.mileage, data.description);
-    return { success: true };
+    return await addCar(data.ownerId, data.make, data.model, data.year, data.price, data.mileage, data.description);
   });
 
 export const Route = createFileRoute("/sell")({
@@ -54,6 +56,13 @@ function SellPage() {
     description: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const remaining = user ? getRemainingListings(user) : 0;
+  const cap = user ? getListingCap(user.tier) : 0;
+  const isUnlimited = cap === Infinity;
+  const atCap = user && remaining === 0;
+  const fee = carData.price > 0 && user ? calcTransactionFee(carData.price, user.tier) : null;
 
   if (!user) {
     return (
@@ -76,9 +85,22 @@ function SellPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    
+    if (atCap) {
+      setError(`You've reached your listing cap. Your ${user.tier} tier allows ${isUnlimited ? 'unlimited' : cap} listings. Please upgrade to list more.`);
+      return;
+    }
+
     setIsSubmitting(true);
-    await addCarFn({ data: { ...carData, ownerId: user.id } });
+    const result = await addCarFn({ data: { ...carData, ownerId: user.id } });
     setIsSubmitting(false);
+    
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    
     alert("Vehicle listed successfully! Referral rewards applied if applicable.");
     navigate({ to: '/', search: (prev) => prev });
   };
@@ -90,6 +112,7 @@ function SellPage() {
       <div className="bg-racing-red text-white py-2 text-center text-xs font-black uppercase tracking-[0.2em] flex justify-center gap-8 border-b border-white/10">
         <span>AUTHENTICATED: {user.email}</span>
         <span className="text-gold">TIER: {user.tier}</span>
+        <span>LISTINGS: {user.listing_count || 0}/{isUnlimited ? '∞' : cap}</span>
       </div>
 
       <main className="container mx-auto px-4 py-16 max-w-2xl">
@@ -97,9 +120,72 @@ function SellPage() {
           <div className="w-8 h-[2px] bg-racing-red" />
           MARKETPLACE
         </div>
-        <h1 className="text-5xl font-black uppercase tracking-tighter italic mb-12">
+        <h1 className="text-5xl font-black uppercase tracking-tighter italic mb-4">
           List Your <span className="text-racing-red">Muscle Car</span>
         </h1>
+
+        {/* Listing Cap & Fee Info */}
+        <div className="grid md:grid-cols-2 gap-4 mb-8">
+          <div className="bg-dark-steel rounded-2xl p-6 border border-white/5">
+            <div className="flex items-center gap-3 text-titanium/70 text-xs font-black uppercase tracking-widest mb-2">
+              <Car size={14} />
+              LISTING SLOTS
+            </div>
+            <div className="flex items-end gap-2">
+              <span className="text-3xl font-black text-white">{user.listing_count || 0}</span>
+              <span className="text-titanium/50 text-lg font-mono font-black">/ {isUnlimited ? '∞' : cap}</span>
+              <span className="text-titanium/50 text-xs font-bold uppercase tracking-wider ml-2">used</span>
+            </div>
+            {atCap ? (
+              <div className="mt-3 flex items-center gap-2 text-racing-red text-xs font-black uppercase tracking-widest">
+                <AlertTriangle size={14} />
+                CAP REACHED
+              </div>
+            ) : (
+              <div className="mt-3 text-emerald text-xs font-black uppercase tracking-widest">
+                {remaining === Infinity ? 'Unlimited listings' : `${remaining} remaining`}
+              </div>
+            )}
+          </div>
+          <div className="bg-dark-steel rounded-2xl p-6 border border-white/5">
+            <div className="flex items-center gap-3 text-titanium/70 text-xs font-black uppercase tracking-widest mb-2">
+              <TrendingUp size={14} />
+              TRANSACTION FEE
+            </div>
+            {user.tier === 'starter' ? (
+              <div>
+                <div className="text-2xl font-black text-racing-red">Up to 7.5%</div>
+                <div className="text-titanium/50 text-[10px] font-bold uppercase tracking-wider mt-1">
+                  Non-subscriber rate. <span className="text-gold">Upgrade to 0%!</span>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="text-3xl font-black text-emerald">0%</div>
+                <div className="text-titanium/50 text-[10px] font-bold uppercase tracking-wider mt-1">
+                  Subscriber benefit — no transaction fees
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {error && (
+          <div className="bg-racing-red/10 border border-racing-red/30 rounded-2xl p-6 mb-8 flex items-center gap-4">
+            <AlertTriangle className="text-racing-red flex-shrink-0" size={24} />
+            <div>
+              <p className="text-white font-bold text-sm">{error}</p>
+              {error.includes('cap') && (
+                <button
+                  onClick={() => navigate({ to: '/', search: (prev) => prev, hash: 'pricing' })}
+                  className="text-gold text-xs font-black uppercase tracking-widest mt-2 hover:underline"
+                >
+                  View Pricing Plans →
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-8 bg-dark-steel p-10 rounded-[2rem] border border-white/10 shadow-2xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -1,9 +1,10 @@
 export interface User {
   id: string;
   email: string;
-  tier: 'starter' | 'enthusiast' | 'entrepreneur' | 'dealership';
+  tier: 'starter' | 'enthusiast' | 'entrepreneur' | 'professional' | 'dealership';
   valuation_count: number;
   guide_count: number;
+  listing_count: number;
   referral_code: string | null;
 }
 
@@ -171,11 +172,63 @@ export async function generateReferralCode(userId: string, email: string): Promi
   return code;
 }
 
-export async function addCar(ownerId: string, make: string, model: string, year: number, price: number, mileage: number, description: string): Promise<void> {
+/** Listing cap per tier — Starter=1, Enthusiast=5, Entrepreneur=25, Professional=unlimited */
+export function getListingCap(tier: string): number {
+  switch (tier) {
+    case 'starter': return 1;
+    case 'enthusiast': return 5;
+    case 'entrepreneur': return 25;
+    case 'professional': return Infinity;
+    case 'dealership': return Infinity;
+    default: return 1;
+  }
+}
+
+/** Returns remaining listings allowed for a user */
+export function getRemainingListings(user: User): number {
+  const cap = getListingCap(user.tier);
+  const used = user.listing_count || 0;
+  return cap === Infinity ? Infinity : Math.max(0, cap - used);
+}
+
+/**
+ * Calculate transaction fee for non-subscribers.
+ * - Under $25k: 7.5%
+ * - $25k-$75k: 5.5%
+ * - $75k+: 4.5%
+ * Subscribers (any paid tier) pay 0%.
+ */
+export function calcTransactionFee(price: number, tier: string): { rate: number; fee: number; feeDisplay: string } {
+  if (tier !== 'starter') return { rate: 0, fee: 0, feeDisplay: '$0' };
+
+  let rate: number;
+  if (price < 25000) rate = 0.075;
+  else if (price <= 75000) rate = 0.055;
+  else rate = 0.045;
+
+  const fee = Math.round(price * rate);
+  const feeDisplay = `$${fee.toLocaleString()}`;
+  return { rate, fee, feeDisplay };
+}
+
+export async function addCar(ownerId: string, make: string, model: string, year: number, price: number, mileage: number, description: string): Promise<{ success: boolean; error?: string }> {
+  // Check listing cap
+  const userRows = await teamDb(`SELECT * FROM users WHERE id = '${ownerId}'`);
+  if (userRows.length === 0) return { success: false, error: 'User not found' };
+  const user = userRows[0] as User;
+  const cap = getListingCap(user.tier);
+  const currentCount = user.listing_count || 0;
+  if (currentCount >= cap) {
+    return { success: false, error: `Listing cap reached. Your ${user.tier} tier allows ${cap === Infinity ? 'unlimited' : cap} listings. Upgrade to list more.` };
+  }
+
   const { randomUUID } = await import("node:crypto");
   const id = randomUUID();
   await teamDb(`INSERT INTO cars (id, owner_id, make, model, year, price, mileage, description, status) VALUES ('${id}', '${ownerId}', '${make}', '${model}', ${year}, ${price}, ${mileage}, '${description.replace(/'/g, "''")}', 'available')`);
   
+  // Increment listing count
+  await teamDb(`UPDATE users SET listing_count = listing_count + 1 WHERE id = '${ownerId}'`);
+
   // Check if this user was referred and this is their first car
   const userCars = await getUserCars(ownerId);
   if (userCars.length === 1) {
@@ -194,4 +247,6 @@ export async function addCar(ownerId: string, make: string, model: string, year:
       }
     }
   }
+
+  return { success: true };
 }

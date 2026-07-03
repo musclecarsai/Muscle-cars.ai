@@ -7,11 +7,13 @@ const tiers = [
     price: '$0',
     description: 'Dip your toes into the muscle car world.',
     features: [
+      { text: '1 Active Listing', included: true },
       { text: '3 High-Res Car Guides', included: true },
       { text: '3 Market Valuations', included: true },
       { text: 'Browse Marketplace', included: true },
       { text: 'Portfolio Management', included: false },
-      { text: 'Sell Vehicles', included: false },
+      { text: 'Sell Vehicles', included: true },
+      { text: '4.5%–7.5% Transaction Fee', included: true, warn: true },
     ],
     button: 'Get Started',
     highlight: false
@@ -21,6 +23,8 @@ const tiers = [
     price: '$29',
     description: 'For the serious owner and collector.',
     features: [
+      { text: '5 Active Listings', included: true },
+      { text: '0% Transaction Fees', included: true, accent: true },
       { text: 'Up to 5 Active Listings', included: true },
       { text: 'Unlimited Portfolio Access', included: true },
       { text: '5 Valuations per Month', included: true },
@@ -35,6 +39,8 @@ const tiers = [
     price: '$79',
     description: 'Maximize your ROI on every flip.',
     features: [
+      { text: '25 Active Listings', included: true },
+      { text: '0% Transaction Fees', included: true, accent: true },
       { text: 'Unlimited Listings', included: true },
       { text: 'Real-time Valuation Engine', included: true },
       { text: 'Appointment Scheduling', included: true },
@@ -49,6 +55,8 @@ const tiers = [
     price: '$249',
     description: 'For dealerships and high-volume collectors.',
     features: [
+      { text: 'Unlimited Listings', included: true },
+      { text: '0% Transaction Fees', included: true, accent: true },
       { text: 'High-Volume Inventory', included: true },
       { text: 'Lead CRM', included: true },
       { text: 'API Access', included: true },
@@ -94,12 +102,16 @@ export const Pricing = ({ onUpgrade }: PricingProps) => {
               <div className="flex-1 space-y-4 mb-8">
                 {tier.features.map((feature) => (
                   <div key={feature.text} className="flex items-center gap-3">
-                    {feature.included ? (
+                    {(feature as any).accent ? (
+                      <Check size={20} className="text-emerald" />
+                    ) : (feature as any).warn ? (
+                      <Check size={20} className="text-racing-red" />
+                    ) : feature.included ? (
                       <Check size={20} className={tier.highlight ? 'text-white' : 'text-red-600'} />
                     ) : (
                       <Lock size={18} className="text-zinc-600" />
                     )}
-                    <span className={`text-sm font-medium ${!feature.included && 'text-zinc-600'}`}>
+                    <span className={`text-sm font-medium ${(feature as any).accent ? 'text-emerald' : (feature as any).warn ? 'text-racing-red' : !feature.included && 'text-zinc-600'}`}>
                       {feature.text}
                     </span>
                   </div>
