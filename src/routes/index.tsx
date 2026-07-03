@@ -137,25 +137,32 @@ function Home() {
       return;
     }
 
-    if (item.title === 'AI Photo Suite') {
-      navigate({ to: '/photo-suite', search: (prev) => prev });
+    // Stripe Payment Link Map — redirect every Buy button to its real checkout page
+    const STRIPE_LINKS: Record<string, string> = {
+      'Single Valuation': 'https://buy.stripe.com/4gMeVd1ep6Rq7GF5Lg1Nu0c',
+      'VIN History Report': 'https://buy.stripe.com/bJe6oHaOZ4Ji3qp3D81Nu0d',
+      'AI Photo Suite': 'https://buy.stripe.com/8x24gz6yJ2Ba3qp5Lg1Nu0e',
+      'Listing Boost': 'https://buy.stripe.com/bJeeVd9KVejS0ed7To1Nu0f',
+      'Featured Meet-up': 'https://buy.stripe.com/00w14n9KV7Vu2ml4Hc1Nu0n',
+      'Technical eBook': 'https://buy.stripe.com/8x27sL8GR5Nm1ih5Lg1Nu0j',
+      'Payment Negotiation': 'https://buy.stripe.com/3cIaEXf5f3Fe0edehM1Nu0k',
+      'Verified Inspection': 'https://buy.stripe.com/14AaEXcX7cbK8KJ2z41Nu0l',
+      'Portfolio Export': 'https://buy.stripe.com/9B6cN55uFa3C6CB7To1Nu0m',
+    };
+
+    const stripeUrl = STRIPE_LINKS[item.title];
+    if (stripeUrl) {
+      const priceCents = Math.round(parseFloat(item.price.replace('$', '')) * 100);
+      await logTransactionFn({ data: { userId: user.id, type: 'micro-transaction', itemId: item.title, amountCents: priceCents } });
+      window.location.href = stripeUrl;
       return;
     }
 
-    if (item.title === 'Verified Inspection') {
-      navigate({ to: '/book-inspection', search: (prev) => prev });
-      return;
-    }
-
-    if (item.title === 'Featured Meet-up') {
-      navigate({ to: '/meets', search: (prev) => prev });
-      return;
-    }
-
+    // Fallback for any items not yet mapped
     const priceCents = Math.round(parseFloat(item.price.replace('$', '')) * 100);
     await logTransactionFn({ data: { userId: user.id, type: 'micro-transaction', itemId: item.title, amountCents: priceCents } });
-    alert(`Purchase successful: ${item.title} for ${item.price}!`);
-    navigate({ search: (prev) => prev }); // Refresh data
+    alert(`Purchase logged: ${item.title} for ${item.price}! (Stripe redirect not yet configured)`);
+    navigate({ search: (prev) => prev });
   };
 
   const handleUpgrade = async (tier: string, price: string) => {
@@ -164,21 +171,26 @@ function Home() {
       return;
     }
 
-    if (tier.toLowerCase() === 'enthusiast') {
-      window.location.href = "https://buy.stripe.com/6oUfZhdSc7x59955i48IU00";
+    const tierLower = tier.toLowerCase();
+    if (tierLower === 'enthusiast') {
+      window.location.href = "https://buy.stripe.com/aFa3cv6yJgs0e53ddI1Nu0h";
       return;
     }
-
-    if (tier.toLowerCase() === 'entrepreneur') {
-      window.location.href = "https://buy.stripe.com/dRmaEX01m5oX0CzaCo8IU01";
+    if (tierLower === 'entrepreneur') {
+      window.location.href = "https://buy.stripe.com/6oU8wP2it8Zy8KJ3D81Nu0g";
+      return;
+    }
+    if (tierLower === 'professional') {
+      window.location.href = "https://buy.stripe.com/fZuaEXg9j2Ba3qpc9E1Nu0i";
       return;
     }
 
     const priceCents = Math.round(parseFloat(price.replace('$', '')) * 100);
     await logTransactionFn({ data: { userId: user.id, type: 'subscription', itemId: tier, amountCents: priceCents } });
     alert(`Getting started with the ${tier} plan!`);
-    navigate({ search: (prev) => prev }); // Refresh data
+    navigate({ search: (prev) => prev });
   };
+
 
   return (
     <div className="bg-charcoal min-h-screen text-white selection:bg-racing-red selection:text-white">

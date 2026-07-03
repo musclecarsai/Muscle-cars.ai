@@ -62,7 +62,7 @@ const getAdminData = createServerFn({ method: "GET" }).handler(async () => {
       isHittingLimits: (u.valuation_count >= valLimit) || (u.guide_count >= guideLimit),
       purchases
     };
-  }).filter(u => u.isHittingLimits || u.purchases.length > 0);
+  });
 
   // Projected MRR
   const tierPrices: any = {
@@ -114,6 +114,7 @@ function AdminPortal() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "transactions" | "consumption" | "assets" | "support">("dashboard");
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,6 +137,11 @@ function AdminPortal() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleInspect = (userId: string) => {
+    setSelectedUserId(userId);
+    setActiveTab("support");
   };
 
   useEffect(() => {
@@ -218,12 +224,12 @@ function AdminPortal() {
       </nav>
 
       <main className="mx-auto max-w-7xl px-6 py-12 lg:px-8 bg-carbon-fiber min-h-screen">
-        {activeTab === "dashboard" && <DashboardView data={data} />}
-        {activeTab === "users" && <UsersView data={data} />}
-        {activeTab === "consumption" && <ConsumptionView data={data} />}
+        {activeTab === "dashboard" && <DashboardView data={data} onInspect={handleInspect} />}
+        {activeTab === "users" && <UsersView data={data} onInspect={handleInspect} />}
+        {activeTab === "consumption" && <ConsumptionView data={data} onInspect={handleInspect} />}
         {activeTab === "transactions" && <TransactionsView data={data} />}
         {activeTab === "assets" && <AssetsView data={data} />}
-        {activeTab === "support" && <SupportView data={data} onUpdate={fetchData} />}
+        {activeTab === "support" && <SupportView data={data} onUpdate={fetchData} selectedUserId={selectedUserId} setSelectedUserId={setSelectedUserId} />}
       </main>
     </div>
   );
@@ -330,7 +336,7 @@ function DashboardView({ data }: { data: any }) {
   );
 }
 
-function UsersView({ data }: { data: any }) {
+function UsersView({ data, onInspect }: { data: any, onInspect: (id: string) => void }) {
   const [search, setSearch] = useState("");
   const filteredUsers = (data.users || []).filter((user: any) => 
     user.email?.toLowerCase().includes(search.toLowerCase())
@@ -358,6 +364,7 @@ function UsersView({ data }: { data: any }) {
                 <th className="px-6 py-4 text-center">Valuations</th>
                 <th className="px-6 py-4 text-center">Guides</th>
                 <th className="px-6 py-4">Joined</th>
+                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -374,6 +381,14 @@ function UsersView({ data }: { data: any }) {
                   <td className="px-6 py-4 text-center text-titanium font-mono">{user.valuation_count}</td>
                   <td className="px-6 py-4 text-center text-titanium font-mono">{user.guide_count}</td>
                   <td className="px-6 py-4 text-titanium text-[10px] uppercase font-black">{new Date(user.created_at).toLocaleDateString()}</td>
+                  <td className="px-6 py-4 text-right">
+                    <button 
+                      onClick={() => onInspect(user.id)}
+                      className="rounded bg-racing-red/10 px-3 py-1 text-[10px] font-black uppercase text-racing-red hover:bg-racing-red hover:text-white transition-all"
+                    >
+                      Inspect Account
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -509,14 +524,16 @@ function AssetsView({ data }: { data: any }) {
   );
 }
 
-function SupportView({ data, onUpdate }: { data: any, onUpdate: () => void }) {
-  const [selectedUserId, setSelectedUserId] = useState("");
+function SupportView({ data, onUpdate, selectedUserId, setSelectedUserId }: { data: any, onUpdate: () => void, selectedUserId: string, setSelectedUserId: (id: string) => void }) {
   const [tier, setTier] = useState("starter");
   const [valCount, setValCount] = useState(0);
   const [guideCount, setGuideCount] = useState(0);
   const [updating, setUpdating] = useState(false);
 
   const selectedUser = (data.users || []).find((u: any) => u.id === selectedUserId);
+  const userTransactions = (data.transactions || []).filter((tx: any) => tx.user_id === selectedUserId);
+  const userAssets = (data.assets || []).filter((a: any) => a.user_id === selectedUserId);
+  const userInspections = (data.inspections || []).filter((i: any) => i.user_id === selectedUserId);
 
   useEffect(() => {
     if (selectedUser) {
@@ -541,68 +558,201 @@ function SupportView({ data, onUpdate }: { data: any, onUpdate: () => void }) {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
-      <h2 className="text-xl font-black tracking-tight uppercase text-center italic">Support Overrides</h2>
-      <div className="rounded-xl border border-white/5 bg-dark-steel p-8 shadow-2xl space-y-6">
-        <div>
-          <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-titanium">Select Target Account</label>
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-black tracking-tight uppercase italic">Account Inspector</h2>
+        <div className="flex gap-4">
           <select 
             value={selectedUserId} 
             onChange={(e) => setSelectedUserId(e.target.value)}
-            className="w-full rounded-lg border border-white/10 bg-charcoal px-4 py-2 text-white focus:border-racing-red focus:outline-none font-mono text-sm"
+            className="rounded-lg border border-white/10 bg-dark-steel px-4 py-2 text-white focus:border-racing-red focus:outline-none font-mono text-xs w-64"
           >
-            <option value="">Choose User...</option>
+            <option value="">Select Account to Inspect...</option>
             {data.users?.map((u: any) => (
               <option key={u.id} value={u.id}>{u.email}</option>
             ))}
           </select>
+          {selectedUserId && (
+            <button 
+              onClick={() => setSelectedUserId("")}
+              className="text-[10px] font-black uppercase tracking-widest text-titanium hover:text-racing-red transition-colors"
+            >
+              Clear Selection
+            </button>
+          )}
         </div>
+      </div>
 
-        {selectedUser && (
-          <form onSubmit={handleSubmit} className="space-y-4 border-t border-white/5 pt-6 animate-in fade-in slide-in-from-top-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div>
-                <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-titanium">Tier</label>
-                <select 
-                  value={tier} 
-                  onChange={(e) => setTier(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-charcoal px-3 py-1.5 text-xs text-white focus:border-racing-red focus:outline-none font-black uppercase"
+      {!selectedUser ? (
+        <div className="rounded-xl border border-white/5 bg-dark-steel p-20 shadow-2xl flex flex-col items-center justify-center text-center">
+          <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-titanium">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+            </svg>
+          </div>
+          <h3 className="text-sm font-black uppercase tracking-widest text-white">No Account Selected</h3>
+          <p className="text-xs text-titanium mt-2 max-w-xs">Choose a customer from the dropdown above or click "Inspect" in the Accounts or Usage tabs to view detailed history.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          {/* Left Column: Profile & Overrides */}
+          <div className="space-y-6">
+            <div className="rounded-xl border border-white/5 bg-dark-steel p-6 shadow-2xl space-y-6">
+              <div className="border-b border-white/5 pb-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-titanium mb-1">Identity</p>
+                <p className="text-sm font-black text-white font-mono break-all">{selectedUser.email}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-titanium mt-4 mb-1">Active Subscription</p>
+                <div className="flex items-center gap-2">
+                  <span className={`rounded px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter ${
+                    selectedUser.tier === 'starter' ? 'bg-white/10 text-titanium' : 'bg-gold text-charcoal'
+                  }`}>
+                    {selectedUser.tier} Tier
+                  </span>
+                  <span className="text-[10px] text-titanium uppercase font-black">Since {new Date(selectedUser.created_at).toLocaleDateString()}</span>
+                </div>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-racing-red italic">Support Overrides</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-titanium">Subscription Tier</label>
+                    <select 
+                      value={tier} 
+                      onChange={(e) => setTier(e.target.value)}
+                      className="w-full rounded-lg border border-white/10 bg-charcoal px-3 py-1.5 text-xs text-white focus:border-racing-red focus:outline-none font-black uppercase"
+                    >
+                      <option value="starter">Starter</option>
+                      <option value="enthusiast">Enthusiast</option>
+                      <option value="entrepreneur">Entrepreneur</option>
+                      <option value="dealership">Dealership</option>
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-titanium">Valuations</label>
+                      <input 
+                        type="number" 
+                        value={valCount} 
+                        onChange={(e) => setValCount(Number(e.target.value))}
+                        className="w-full rounded-lg border border-white/10 bg-charcoal px-3 py-1.5 text-xs text-white focus:border-racing-red focus:outline-none font-mono font-black"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-titanium">Guides</label>
+                      <input 
+                        type="number" 
+                        value={guideCount} 
+                        onChange={(e) => setGuideCount(Number(e.target.value))}
+                        className="w-full rounded-lg border border-white/10 bg-charcoal px-3 py-1.5 text-xs text-white focus:border-racing-red focus:outline-none font-mono font-black"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={updating}
+                  className="w-full rounded-lg bg-racing-red py-3 text-[10px] font-black uppercase tracking-widest text-white hover:bg-racing-red-light transition-colors disabled:opacity-50"
                 >
-                  <option value="starter">Starter</option>
-                  <option value="enthusiast">Enthusiast</option>
-                  <option value="entrepreneur">Entrepreneur</option>
-                  <option value="dealership">Dealership</option>
-                </select>
+                  {updating ? 'Updating...' : 'Update Permissions'}
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Middle & Right Column: Activity History */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Transaction History */}
+            <div className="rounded-xl border border-white/5 bg-dark-steel shadow-2xl overflow-hidden">
+              <div className="bg-charcoal/50 px-6 py-4 border-b border-white/5">
+                <h4 className="text-xs font-black uppercase tracking-widest text-white italic">Billing & Subscriptions</h4>
               </div>
-              <div>
-                <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-titanium">Valuations</label>
-                <input 
-                  type="number" 
-                  value={valCount} 
-                  onChange={(e) => setValCount(Number(e.target.value))}
-                  className="w-full rounded-lg border border-white/10 bg-charcoal px-3 py-1.5 text-xs text-white focus:border-racing-red focus:outline-none font-mono font-black"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-titanium">Guides</label>
-                <input 
-                  type="number" 
-                  value={guideCount} 
-                  onChange={(e) => setGuideCount(Number(e.target.value))}
-                  className="w-full rounded-lg border border-white/10 bg-charcoal px-3 py-1.5 text-xs text-white focus:border-racing-red focus:outline-none font-mono font-black"
-                />
+              <div className="p-0">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-charcoal/30 text-[9px] uppercase text-titanium font-black tracking-widest border-b border-white/5">
+                    <tr>
+                      <th className="px-6 py-3">Type</th>
+                      <th className="px-6 py-3">Item / Description</th>
+                      <th className="px-6 py-3 text-right">Amount</th>
+                      <th className="px-6 py-3 text-center">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {userTransactions.map((tx: any) => (
+                      <tr key={tx.id} className="hover:bg-white/5 transition-colors">
+                        <td className="px-6 py-4">
+                          <span className={`text-[9px] font-black uppercase ${tx.type === 'subscription' ? 'text-gold' : 'text-titanium'}`}>
+                            {tx.type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 font-black uppercase italic text-white">{tx.item_id || 'N/A'}</td>
+                        <td className="px-6 py-4 text-right font-black text-emerald font-mono">
+                          ${(tx.amount_cents / 100).toFixed(2)}
+                        </td>
+                        <td className="px-6 py-4 text-center text-titanium text-[9px] uppercase font-black">
+                          {new Date(tx.created_at).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))}
+                    {userTransactions.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="px-6 py-8 text-center text-titanium italic text-[10px] uppercase tracking-widest">No transaction history found.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
-            <button
-              type="submit"
-              disabled={updating}
-              className="w-full rounded-lg bg-emerald py-3 text-xs font-black uppercase tracking-widest text-white hover:bg-emerald/90 transition-colors disabled:opacity-50 shadow-lg shadow-emerald/20"
-            >
-              {updating ? 'Applying Overrides...' : 'Commit Changes'}
-            </button>
-          </form>
-        )}
-      </div>
+
+            {/* Assets & Inspections */}
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="rounded-xl border border-white/5 bg-dark-steel shadow-2xl overflow-hidden">
+                <div className="bg-charcoal/50 px-6 py-4 border-b border-white/5">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-white italic">Digital Assets</h4>
+                </div>
+                <div className="p-4 space-y-3">
+                  {userAssets.map((asset: any) => (
+                    <div key={asset.id} className="flex items-center justify-between p-3 rounded-lg bg-charcoal/50 border border-white/5">
+                      <div>
+                        <p className="text-[10px] font-black uppercase text-white italic">{asset.name}</p>
+                        <p className="text-[8px] text-titanium uppercase font-black">{asset.type}</p>
+                      </div>
+                      <span className="text-[8px] text-titanium uppercase font-black">{new Date(asset.created_at).toLocaleDateString()}</span>
+                    </div>
+                  ))}
+                  {userAssets.length === 0 && (
+                    <p className="text-center py-6 text-titanium italic text-[10px] uppercase tracking-widest">No generated assets.</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-white/5 bg-dark-steel shadow-2xl overflow-hidden">
+                <div className="bg-charcoal/50 px-6 py-4 border-b border-white/5">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-white italic">Physical Service</h4>
+                </div>
+                <div className="p-4 space-y-3">
+                  {userInspections.map((insp: any) => (
+                    <div key={insp.id} className="p-3 rounded-lg bg-charcoal/50 border border-white/5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
+                          insp.status === 'completed' ? 'bg-emerald/10 text-emerald' : 'bg-gold/10 text-gold'
+                        }`}>
+                          {insp.status}
+                        </span>
+                        <span className="text-[8px] text-titanium uppercase font-black">{new Date(insp.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <p className="text-[10px] font-black text-white italic">{insp.location}</p>
+                    </div>
+                  ))}
+                  {userInspections.length === 0 && (
+                    <p className="text-center py-6 text-titanium italic text-[10px] uppercase tracking-widest">No service bookings.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -621,7 +771,7 @@ function StatCard({ title, value }: { title: string; value: string | number }) {
   );
 }
 
-function ConsumptionView({ data }: { data: any }) {
+function ConsumptionView({ data, onInspect }: { data: any, onInspect: (id: string) => void }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -641,6 +791,7 @@ function ConsumptionView({ data }: { data: any }) {
                 <th className="px-6 py-4 text-center">Valuation Consumption</th>
                 <th className="px-6 py-4 text-center">Guide Consumption</th>
                 <th className="px-6 py-4">Garage Shop Purchases</th>
+                <th className="px-6 py-4 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -696,6 +847,17 @@ function ConsumptionView({ data }: { data: any }) {
                         <span className="text-titanium text-[10px] italic">No transactions</span>
                       )}
                     </div>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button 
+                      onClick={() => onInspect(u.id)}
+                      className="text-titanium hover:text-white transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.644C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </button>
                   </td>
                 </tr>
               ))}

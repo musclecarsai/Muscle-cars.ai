@@ -1,5 +1,5 @@
 import React from 'react';
-import { Zap, ShieldCheck, Camera, FileText, BarChart3, FileOutput, BookOpen, Users } from 'lucide-react';
+import { Zap, ShieldCheck, Camera, FileText, BarChart3, FileOutput, BookOpen, Users, DollarSign } from 'lucide-react';
 
 const ADD_ONS = [
   {
@@ -71,6 +71,26 @@ const ADD_ONS = [
     icon: <FileOutput className="text-emerald" size={24} />,
     accent: "border-emerald",
     tag: "Financial"
+  },
+  {
+    title: "Technical eBook",
+    price: "$14.99",
+    headline: "Master Technical Deep Dives.",
+    description: "Premium technical eBooks covering restoration, tuning, and investment strategy. Verified by our expert network.",
+    image: "/src/assets/garage-shop/portfolio-export-banner.png",
+    icon: <BookOpen className="text-gold" size={24} />,
+    accent: "border-gold",
+    tag: "Education"
+  },
+  {
+    title: "Payment Negotiation",
+    price: "$149.00",
+    headline: "Expert Negotiator, Your Deal.",
+    description: "Let our professional negotiators close the deal for you. We negotiate payment terms, deposits, and final pricing.",
+    image: "/src/assets/garage-shop/portfolio-export-banner.png",
+    icon: <DollarSign className="text-emerald" size={24} />,
+    accent: "border-emerald",
+    tag: "Concierge"
   }
 ];
 

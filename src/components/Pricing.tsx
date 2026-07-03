@@ -43,6 +43,20 @@ const tiers = [
     ],
     button: 'Go Entrepreneur',
     highlight: false
+  },
+  {
+    name: 'Professional',
+    price: '$249',
+    description: 'For dealerships and high-volume collectors.',
+    features: [
+      { text: 'High-Volume Inventory', included: true },
+      { text: 'Lead CRM', included: true },
+      { text: 'API Access', included: true },
+      { text: '2 Negotiator Services/mo', included: true },
+      { text: 'Priority Support', included: true },
+    ],
+    button: 'Go Professional',
+    highlight: false
   }
 ];
 
@@ -59,7 +73,7 @@ export const Pricing = ({ onUpgrade }: PricingProps) => {
           <p className="text-zinc-400 max-w-2xl mx-auto">From free insights to professional dealership tools.</p>
         </div>
         
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
           {tiers.map((tier) => (
             <div 
               key={tier.name}
