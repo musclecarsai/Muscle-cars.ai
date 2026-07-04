@@ -51,6 +51,50 @@ const FREE_GUIDES = [
     filename: "investment-grade.pdf",
     coverImg: "/src/assets/marketing/lead-magnet-investment-secrets.png",
     leadMagnetImg: "lead-magnet-investment-secrets.png"
+  },
+  {
+    id: "chevelle-ss",
+    title: "Chevelle SS Buyer's Guide",
+    subtitle: "How to Spot a Real Super Sport",
+    description: "Complete identification guide for the Chevelle SS — decode trim tags, verify originality, and estimate restoration costs.",
+    pages: "Free Chapter",
+    features: ["Trim Code Decoding", "Real SS vs Clone Detection", "Restoration Cost Calculator"],
+    filename: "chevelle-ss-buyers-guide.pdf",
+    coverImg: "/src/assets/ebook-covers/guide-chevelle-ss.png",
+    leadMagnetImg: null
+  },
+  {
+    id: "mopar-guide",
+    title: "The Ultimate Mopar Guide",
+    subtitle: "Hemi Cuda, Charger, Road Runner & Super Bee",
+    description: "Complete field guide to the most iconic Mopar muscle cars. Identification, production numbers, and current market values.",
+    pages: "Free Chapter",
+    features: ["Hemi Cuda & Challenger Specs", "Charger R/T & Daytona IDs", "Road Runner / Super Bee Values"],
+    filename: "ultimate-mopar-guide.pdf",
+    coverImg: "/src/assets/ebook-covers/guide-mopar.png",
+    leadMagnetImg: null
+  },
+  {
+    id: "ford-muscle",
+    title: "Ford Muscle Bible",
+    subtitle: "Boss 429/302, Torino Cobra & Shelby GT350/500",
+    description: "The definitive reference for Ford's golden era. Engine specs, production figures, and investment-grade verification.",
+    pages: "Free Chapter",
+    features: ["Boss 429 vs 302 Identification", "Torino Cobra Value Guide", "Shelby GT350/500 Authenticity"],
+    filename: "ford-muscle-bible.pdf",
+    coverImg: "/src/assets/ebook-covers/guide-ford-muscle.png",
+    leadMagnetImg: null
+  },
+  {
+    id: "engine-building",
+    title: "Engine Building 101",
+    subtitle: "Small Blocks, Big Blocks & Stroker Kits",
+    description: "Master engine blueprinting for street and strip. Bore, stroke, compression, and cam selection made simple.",
+    pages: "Free Chapter",
+    features: ["Small Block vs Big Block Guide", "Stroker Kit Selection", "Blueprinting for Street/Strip"],
+    filename: "engine-building-101.pdf",
+    coverImg: "/src/assets/ebook-covers/guide-engine-building.png",
+    leadMagnetImg: null
   }
 ];
 
@@ -239,7 +283,7 @@ function PremiumLibrary() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {FREE_GUIDES.map((guide) => (
               <div key={guide.id} className="group bg-dark-steel rounded-3xl overflow-hidden border border-white/5 hover:border-gold/30 transition-all duration-500 shadow-2xl shadow-black/50 card-hover">
                 {/* Cover */}
