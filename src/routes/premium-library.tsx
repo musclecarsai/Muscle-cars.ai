@@ -3,7 +3,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
-import { EmailCaptureModal } from "../components/EmailCaptureModal";
 import { 
   getUser, 
   createUser, 
@@ -14,6 +13,8 @@ import {
   type Asset
 } from "../lib/db";
 import { BookOpen, Download, ShieldCheck, Lock, ShoppingCart, CheckCircle2, FileText } from "lucide-react";
+import { EmailCaptureModal } from "../components/EmailCaptureModal";
+import { SignInModal } from "../components/SignInModal";
 
 const FREE_GUIDES = [
   {
@@ -111,10 +112,11 @@ function PremiumLibrary() {
   const navigate = useNavigate({ from: "/premium-library" });
   const [processing, setProcessing] = useState<string | null>(null);
   const [emailCapture, setEmailCapture] = useState<{ open: boolean, guideTitle: string }>({ open: false, guideTitle: "" });
+  const [signInOpen, setSignInOpen] = useState(false);
 
   const handlePurchase = async (ebook: typeof PREMIUM_EBOOKS[0]) => {
     if (!user) {
-      alert("Please login first (add ?email=your@email.com to the URL)");
+      setSignInOpen(true);
       return;
     }
 
@@ -177,6 +179,17 @@ function PremiumLibrary() {
           navigate({ search: (prev) => ({ ...prev, email }) });
         }}
       />
+      <SignInModal
+        isOpen={signInOpen}
+        onClose={() => setSignInOpen(false)}
+        onSignedIn={(email) => {
+          setSignInOpen(false);
+          const url = new URL(window.location.href);
+          url.searchParams.set("email", email);
+          window.location.href = url.toString();
+        }}
+      />
+
 
       {/* Free Guides Section */}
       <section className="py-24 bg-gradient-to-b from-charcoal to-dark-steel">

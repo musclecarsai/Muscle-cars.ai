@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
+import { SignInModal } from "../components/SignInModal";
 import { 
   getUser, 
   createUser, 
@@ -47,6 +48,7 @@ export const Route = createFileRoute("/sell")({
 function SellPage() {
   const { user } = Route.useLoaderData();
   const navigate = useNavigate({ from: '/sell' });
+  const [signInOpen, setSignInOpen] = useState(false);
   const [carData, setCarData] = useState({
     make: '',
     model: '',
@@ -72,12 +74,20 @@ function SellPage() {
           <h1 className="text-4xl font-black uppercase mb-8">Authentication Required</h1>
           <p className="text-titanium mb-12">Please sign in to list your vehicle for sale.</p>
           <button 
-            onClick={() => navigate({ to: '/', search: { email: 'tester@musclecars.ai' } })}
+            onClick={() => setSignInOpen(true)}
             className="bg-racing-red px-8 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-racing-red-light transition-all"
           >
-            Sign In as Tester
+            Sign In / Create Account
           </button>
         </div>
+        <SignInModal
+          isOpen={signInOpen}
+          onClose={() => setSignInOpen(false)}
+          onSignedIn={(email) => {
+            setSignInOpen(false);
+            window.location.href = '/sell?email=' + encodeURIComponent(email);
+          }}
+        />
         <Footer />
       </div>
     );

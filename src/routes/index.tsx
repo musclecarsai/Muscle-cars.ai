@@ -25,6 +25,7 @@ import { Pricing } from "../components/Pricing";
 import { Footer } from "../components/Footer";
 import { Paywall } from "../components/Paywall";
 import { EmailCaptureModal } from "../components/EmailCaptureModal";
+import { SignInModal } from "../components/SignInModal";
 import { Search, Lock } from "lucide-react";
 
 // Asset mapping for placeholders
@@ -105,10 +106,12 @@ function Home() {
   const navigate = useNavigate({ from: '/' });
   const [paywall, setPaywall] = useState<{ open: boolean, type: 'valuation' | 'guide' }>({ open: false, type: 'valuation' });
   const [emailCapture, setEmailCapture] = useState<{ open: boolean, guideTitle: string }>({ open: false, guideTitle: "" });
+  const [signInOpen, setSignInOpen] = useState(false);
+  const [pendingUrl, setPendingUrl] = useState<string | null>(null);
 
   const handleAnalyze = async () => {
     if (!user) {
-      alert("Please login first (add ?email=your@email.com to the URL)");
+      setSignInOpen(true);
       return;
     }
 
@@ -172,9 +175,16 @@ function Home() {
     navigate({ search: (prev) => prev });
   };
 
-  const handleUpgrade = async (tier: string, price: string) => {
+    const handleUpgrade = async (tier: string, price: string) => {
     if (!user) {
-      alert("Please login first (add ?email=your@email.com to the URL)");
+      const tierLower = tier.toLowerCase();
+      const SUB_LINKS: Record<string, string> = {
+        'enthusiast': 'https://buy.stripe.com/aFa3cv6yJgs0e53ddI1Nu0h',
+        'entrepreneur': 'https://buy.stripe.com/6oU8wP2it8Zy8KJ3D81Nu0g',
+        'professional': 'https://buy.stripe.com/fZuaEXg9j2Ba3qpc9E1Nu0i',
+      };
+      setPendingUrl(SUB_LINKS[tierLower] || null);
+      setSignInOpen(true);
       return;
     }
 
@@ -196,6 +206,17 @@ function Home() {
     await logTransactionFn({ data: { userId: user.id, type: 'subscription', itemId: tier, amountCents: priceCents } });
     alert(`Getting started with the ${tier} plan!`);
     navigate({ search: (prev) => prev });
+  };
+
+  const handleSignInSuccess = (email: string) => {
+    setSignInOpen(false);
+    if (pendingUrl) {
+      window.location.href = pendingUrl;
+      return;
+    }
+    const url = new URL(window.location.href);
+    url.searchParams.set('email', email);
+    window.location.href = url.toString();
   };
 
 
@@ -234,6 +255,12 @@ function Home() {
           setEmailCapture({ ...emailCapture, open: false });
           navigate({ search: (prev) => ({ ...prev, email }) });
         }}
+      />
+
+      <SignInModal
+        isOpen={signInOpen}
+        onClose={() => { setSignInOpen(false); setPendingUrl(null); }}
+        onSignedIn={handleSignInSuccess}
       />
 
       {/* Marketplace Section */}
