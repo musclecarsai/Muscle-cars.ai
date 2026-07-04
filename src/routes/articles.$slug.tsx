@@ -25,8 +25,43 @@ const getArticleContent = createServerFn({ method: "GET" })
     }
   });
 
+const SEO_META: Record<string, { title: string; desc: string }> = {
+  "best-muscle-cars-to-flip-2026": {
+    title: "Best Muscle Cars to Flip in 2026 | High-ROI Investment Picks",
+    desc: "Discover the top muscle cars with highest ROI potential in 2026. Expert analysis on undervalued models from Fox Body Mustangs to AMC Javelins."
+  },
+  "how-to-value-classic-muscle-car": {
+    title: "How to Value a Classic Muscle Car | Professional Collector's Guide",
+    desc: "Learn professional techniques for valuing classic muscle cars using VIN verification, matching numbers, condition grading, and market data."
+  },
+  "muscle-car-market-trends-2026": {
+    title: "Muscle Car Market Trends 2026 | Comprehensive Report",
+    desc: "Comprehensive 2026 muscle car market analysis: Gen X takeover, Super-Restomod boom, Radwood effect, and investment strategies."
+  },
+  "professional-inspection-checklist": {
+    title: "Professional Muscle Car Inspection Checklist | Protect Your Investment",
+    desc: "50-point professional muscle car inspection checklist. Don't get burned by clones or hidden rust. Expert guide for serious collectors."
+  }
+};
+
 export const Route = createFileRoute("/articles/$slug")({
   loader: ({ params: { slug } }) => getArticleContent({ data: slug }),
+  head: ({ params }) => {
+    const meta = SEO_META[params.slug] || { 
+      title: "Muscle Car Expert Guide | MuscleCars.ai", 
+      desc: "Expert muscle car investment guides, market analysis, and professional inspection resources from MuscleCars.ai."
+    };
+    return {
+      meta: [
+        { title: meta.title },
+        { name: "description", content: meta.desc },
+        { property: "og:title", content: meta.title },
+        { property: "og:description", content: meta.desc },
+        { property: "og:url", content: `https://1e492a047379233056524352bb6fcf8b.ctonew.app/articles/${params.slug}` },
+        { property: "og:type", content: "article" },
+      ],
+    };
+  },
   component: ArticlePage,
 });
 

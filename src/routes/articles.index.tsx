@@ -39,6 +39,15 @@ const ARTICLES = [
 ];
 
 export const Route = createFileRoute("/articles/")({
+  head: () => ({
+    meta: [
+      { title: "Muscle Car Investment Guides & Market Analysis | MuscleCars.ai" },
+      { name: "description", content: "Expert muscle car investment guides, market trend analysis for 2026, and professional inspection checklists. Learn how to value, flip, and collect classic muscle cars." },
+      { name: "keywords", content: "muscle car investment, classic car market trends 2026, muscle car flipping, car valuation guide, muscle car inspection" },
+      { property: "og:title", content: "Muscle Car Investment Guides & Market Analysis | MuscleCars.ai" },
+      { property: "og:description", content: "Expert guides on muscle car investing, market trends, and professional inspection checklists for serious collectors." },
+    ],
+  }),
   component: ArticlesList,
 });
 

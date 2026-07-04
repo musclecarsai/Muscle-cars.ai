@@ -83,6 +83,12 @@ const logTransactionFn = createServerFn({ method: "POST" })
   });
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "MuscleCars.ai — Premium Muscle Car Marketplace, Valuations & Community" },
+      { name: "description", content: "The definitive digital marketplace for high-performance muscle cars. Professional-grade AI valuations, portfolio tracking, and expert negotiation services." },
+    ],
+  }),
   validateSearch: (search: Record<string, unknown>) => {
     return {
       email: (search.email as string) || undefined,

@@ -101,6 +101,63 @@ for (let attempt = 1; ; attempt++) {
           }
         }
 
+        // Car Placeholder Images
+        if (pathname.startsWith("/src/assets/car-placeholders/")) {
+          const filename = pathname.replace("/src/assets/car-placeholders/", "");
+          const imagePath = `/home/team/shared/site/src/assets/car-placeholders/${filename}`;
+          const image = Bun.file(imagePath);
+          if (await image.exists()) {
+            const ext = filename.split('.').pop()?.toLowerCase();
+            const mimeTypes: Record<string, string> = { 'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg' };
+            return new Response(image, { headers: { "Content-Type": mimeTypes[ext || ''] || 'application/octet-stream' } });
+          }
+        }
+
+        // ebook cover images
+        if (pathname.startsWith("/src/assets/ebook-covers/")) {
+          const filename = pathname.replace("/src/assets/ebook-covers/", "");
+          const imagePath = `/home/team/shared/site/src/assets/ebook-covers/${filename}`;
+          const image = Bun.file(imagePath);
+          if (await image.exists()) {
+            const ext = filename.split('.').pop()?.toLowerCase();
+            const mimeTypes: Record<string, string> = { 'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg' };
+            return new Response(image, { headers: { "Content-Type": mimeTypes[ext || ''] || 'application/octet-stream' } });
+          }
+        }
+
+        // Garage Shop images
+        if (pathname.startsWith("/src/assets/garage-shop/")) {
+          const filename = pathname.replace("/src/assets/garage-shop/", "");
+          const imagePath = `/home/team/shared/site/src/assets/garage-shop/${filename}`;
+          const image = Bun.file(imagePath);
+          if (await image.exists()) {
+            const ext = filename.split('.').pop()?.toLowerCase();
+            const mimeTypes: Record<string, string> = { 'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg' };
+            return new Response(image, { headers: { "Content-Type": mimeTypes[ext || ''] || 'application/octet-stream' } });
+          }
+        }
+
+        // Portfolio mockup images
+        if (pathname.startsWith("/src/assets/portfolio-mockup/")) {
+          const filename = pathname.replace("/src/assets/portfolio-mockup/", "");
+          const imagePath = `/home/team/shared/site/src/assets/portfolio-mockup/${filename}`;
+          const image = Bun.file(imagePath);
+          if (await image.exists()) {
+            const ext = filename.split('.').pop()?.toLowerCase();
+            const mimeTypes: Record<string, string> = { 'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg' };
+            return new Response(image, { headers: { "Content-Type": mimeTypes[ext || ''] || 'application/octet-stream' } });
+          }
+        }
+
+        // Carbon fiber texture
+        if (pathname.startsWith("/src/assets/carbon-fiber.png")) {
+          const imagePath = `/home/team/shared/site/src/assets/carbon-fiber.png`;
+          const image = Bun.file(imagePath);
+          if (await image.exists()) {
+            return new Response(image, { headers: { "Content-Type": "image/png" } });
+          }
+        }
+
         // Marketing Asset Download Route
         if (pathname.startsWith("/marketing/")) {
           const filename = pathname.replace("/marketing/", "");
