@@ -158,6 +158,18 @@ for (let attempt = 1; ; attempt++) {
           }
         }
 
+        // Marketing assets (lead magnets, etc.)
+        if (pathname.startsWith("/src/assets/marketing/")) {
+          const filename = pathname.replace("/src/assets/marketing/", "");
+          const imagePath = `/home/team/shared/site/src/assets/marketing/${filename}`;
+          const image = Bun.file(imagePath);
+          if (await image.exists()) {
+            const ext = filename.split('.').pop()?.toLowerCase();
+            const mimeTypes: Record<string, string> = { 'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg' };
+            return new Response(image, { headers: { "Content-Type": mimeTypes[ext || ''] || 'application/octet-stream' } });
+          }
+        }
+
         // Marketing Asset Download Route
         if (pathname.startsWith("/marketing/")) {
           const filename = pathname.replace("/marketing/", "");

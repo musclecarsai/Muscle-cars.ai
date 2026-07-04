@@ -9,12 +9,14 @@ import {
   logTransaction, 
   addAsset,
   getAssets,
+  incrementGuide,
   type User,
   type Asset
 } from "../lib/db";
-import { BookOpen, Download, ShieldCheck, Lock, ShoppingCart, CheckCircle2, FileText } from "lucide-react";
+import { BookOpen, Download, ShieldCheck, Lock, ShoppingCart, CheckCircle2, FileText, AlertTriangle } from "lucide-react";
 import { EmailCaptureModal } from "../components/EmailCaptureModal";
 import { SignInModal } from "../components/SignInModal";
+import { Paywall } from "../components/Paywall";
 
 const FREE_GUIDES = [
   {
@@ -58,7 +60,7 @@ const PREMIUM_EBOOKS = [
     title: "The Ultimate GTO Restoration Guide",
     description: "Technical specs, sourcing rare parts, and common pitfalls. The definitive guide for GTO owners.",
     price: "$14.99",
-    image: "/src/assets/ebook-covers/guide-engine-mastery.png", // Placeholder
+    image: "/src/assets/ebook-covers/guide-gto-restoration.png",
     badge: "PREMIUM #1"
   },
   {
@@ -66,7 +68,7 @@ const PREMIUM_EBOOKS = [
     title: "Muscle Car Investment Secrets",
     description: "How to spot appreciating classics and avoid 'clones'. Protect your capital with expert insight.",
     price: "$14.99",
-    image: "/src/assets/ebook-covers/guide-investment-grade.png", // Placeholder
+    image: "/src/assets/ebook-covers/guide-investment-secrets.png",
     badge: "PREMIUM #2"
   },
   {
@@ -74,8 +76,16 @@ const PREMIUM_EBOOKS = [
     title: "Engine Performance Tuning for Classics",
     description: "Deep dive into small-block and big-block optimization. Maximize torque and reliability.",
     price: "$14.99",
-    image: "/src/assets/ebook-covers/guide-american-icons.png", // Placeholder
+    image: "/src/assets/ebook-covers/guide-performance-tuning.png",
     badge: "PREMIUM #3"
+  },
+  {
+    id: "market-trends",
+    title: "Muscle Car Market Trends 2026",
+    description: "Analysis and projections for the serious collector. Flight to quality, survivor cars, and restomod demand.",
+    price: "$14.99",
+    image: "/src/assets/ebook-covers/guide-market-trends.png",
+    badge: "NEW"
   }
 ];
 
@@ -98,6 +108,13 @@ const purchaseEBookFn = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+const downloadFreeGuideFn = createServerFn({ method: "POST" })
+  .validator((data: { userId: string, guideTitle: string }) => data)
+  .handler(async ({ data }) => {
+    await incrementGuide(data.userId, data.guideTitle);
+    return { success: true };
+  });
+
 export const Route = createFileRoute("/premium-library")({
   validateSearch: (search: Record<string, unknown>) => ({
     email: (search.email as string) || undefined,
@@ -113,6 +130,7 @@ function PremiumLibrary() {
   const [processing, setProcessing] = useState<string | null>(null);
   const [emailCapture, setEmailCapture] = useState<{ open: boolean, guideTitle: string }>({ open: false, guideTitle: "" });
   const [signInOpen, setSignInOpen] = useState(false);
+  const [paywallOpen, setPaywallOpen] = useState(false);
 
   const handlePurchase = async (ebook: typeof PREMIUM_EBOOKS[0]) => {
     if (!user) {
@@ -133,7 +151,7 @@ function PremiumLibrary() {
         } 
       });
       alert(`Success! "${ebook.title}" has been added to your library.`);
-      navigate({ search: (prev) => prev }); // Refresh
+      navigate({ search: (prev) => prev });
     } catch (err) {
       alert("Purchase failed. Please try again.");
     } finally {
@@ -141,13 +159,21 @@ function PremiumLibrary() {
     }
   };
 
-  const handleDownloadFree = (guide: typeof FREE_GUIDES[0]) => {
+  const handleDownloadFree = async (guide: typeof FREE_GUIDES[0]) => {
     if (!user) {
       setEmailCapture({ open: true, guideTitle: guide.title });
       return;
     }
-    
-    alert(`Success! "${guide.title}" is being sent to your email and added to your portfolio.`);
+
+    // Check guide limit — starter users get 3 free guides
+    if (user.tier === 'starter' && user.guide_count >= 3) {
+      setPaywallOpen(true);
+      return;
+    }
+
+    await downloadFreeGuideFn({ data: { userId: user.id, guideTitle: guide.title } });
+    alert(`Success! "${guide.title}" has been added to your portfolio. Download link sent to ${user.email}.`);
+    navigate({ search: (prev) => prev });
   };
 
   return (
@@ -178,6 +204,13 @@ function PremiumLibrary() {
           setEmailCapture({ ...emailCapture, open: false });
           navigate({ search: (prev) => ({ ...prev, email }) });
         }}
+      />
+      <Paywall
+        isOpen={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        title="Guide Limit Reached"
+        description="You have downloaded all 3 of your free guides. Upgrade to Enthusiast for unlimited access to our entire premium library of technical manuals."
+        feature="PREMIUM GUIDES"
       />
       <SignInModal
         isOpen={signInOpen}
