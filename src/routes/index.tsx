@@ -28,15 +28,22 @@ import { EmailCaptureModal } from "../components/EmailCaptureModal";
 import { SignInModal } from "../components/SignInModal";
 import { Search, Lock } from "lucide-react";
 
-// Asset mapping for placeholders
+// Asset mapping for placeholders — model-specific images
 const CAR_IMAGES: Record<string, string> = {
-  'Plymouth': '/src/assets/car-placeholders/challenger-hellcat.png',
-  'Dodge': '/src/assets/car-placeholders/challenger-hellcat.png',
-  'Chevrolet': '/src/assets/car-placeholders/camaro-zl1.png',
-  'Ford': '/src/assets/car-placeholders/mustang-dark-horse.png',
-  'Buick': '/src/assets/car-placeholders/camaro-zl1.png',
-  'Pontiac': '/src/assets/car-placeholders/camaro-zl1.png',
-  'Oldsmobile': '/src/assets/car-placeholders/camaro-zl1.png',
+  'GNX': '/src/assets/car-placeholders/buick-gnx-87.png',
+  'Camaro': '/src/assets/car-placeholders/camaro-ss-69.png',
+  'Camaro SS': '/src/assets/car-placeholders/camaro-ss-69.png',
+  'Chevelle': '/src/assets/car-placeholders/chevelle-ss-70.png',
+  'Charger': '/src/assets/car-placeholders/charger-rt-70.png',
+  'Charger R/T': '/src/assets/car-placeholders/charger-rt-70.png',
+  'Super Bee': '/src/assets/car-placeholders/super-bee-69.png',
+  'Mustang': '/src/assets/car-placeholders/mustang-65.png',
+  'Mustang GT': '/src/assets/car-placeholders/mustang-gt-67.png',
+  '442': '/src/assets/car-placeholders/olds-442-70.png',
+  "Belvedere HEMI": '/src/assets/car-placeholders/belvedere-hemi-66.png',
+  "Hemi 'Cuda": '/src/assets/car-placeholders/hemi-cuda-70.png',
+  'Road Runner': '/src/assets/car-placeholders/road-runner-70.png',
+  'GTO': '/src/assets/car-placeholders/gto-67.png',
 };
 
 const getPageData = createServerFn({ method: "GET" })
@@ -294,7 +301,7 @@ function Home() {
                 price={`$${car.price.toLocaleString()}`}
                 mileage={`${car.mileage.toLocaleString()} MI`}
                 year={car.year.toString()}
-                image={CAR_IMAGES[car.make] || '/src/assets/car-placeholders/camaro-zl1.png'}
+                image={CAR_IMAGES[car.model] || '/src/assets/car-placeholders/camaro-ss-69.png'}
                 onAnalyze={handleAnalyze}
               />
             ))}

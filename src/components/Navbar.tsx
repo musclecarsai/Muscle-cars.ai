@@ -54,6 +54,14 @@ export const Navbar = () => {
               Meetups
               <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-gold transition-all group-hover:w-full" />
             </a>
+            <a href="/shop" className="hover:text-white transition-colors relative group">
+              Shop
+              <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-gold transition-all group-hover:w-full" />
+            </a>
+            <a href="/partners" className="hover:text-white transition-colors relative group">
+              Partners
+              <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-racing-red transition-all group-hover:w-full" />
+            </a>
             <a href="/referral" className="hover:text-white transition-colors relative group">
               Referrals
               <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-racing-red transition-all group-hover:w-full" />
@@ -108,6 +116,8 @@ export const Navbar = () => {
             <a href="/articles" className="block text-titanium font-bold uppercase text-xs tracking-widest hover:text-white py-2" onClick={() => setMobileMenuOpen(false)}>Articles</a>
             <a href="/premium-library" className="block text-titanium font-bold uppercase text-xs tracking-widest hover:text-white py-2" onClick={() => setMobileMenuOpen(false)}>Library</a>
             <a href="/meets" className="block text-titanium font-bold uppercase text-xs tracking-widest hover:text-white py-2" onClick={() => setMobileMenuOpen(false)}>Meetups</a>
+            <a href="/shop" className="block text-titanium font-bold uppercase text-xs tracking-widest hover:text-white py-2" onClick={() => setMobileMenuOpen(false)}>Shop</a>
+            <a href="/partners" className="block text-titanium font-bold uppercase text-xs tracking-widest hover:text-white py-2" onClick={() => setMobileMenuOpen(false)}>Partners</a>
             <a href="/referral" className="block text-titanium font-bold uppercase text-xs tracking-widest hover:text-white py-2" onClick={() => setMobileMenuOpen(false)}>Referrals</a>
             <a href="/sell" className="block bg-racing-red px-6 py-3 rounded-lg font-black uppercase text-xs tracking-widest text-center">Sell Vehicle</a>
             {!userEmail && (

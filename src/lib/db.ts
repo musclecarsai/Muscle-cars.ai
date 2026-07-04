@@ -61,6 +61,30 @@ export interface Meet {
   organizer_email?: string;
 }
 
+
+export interface Order {
+  id: string;
+  user_id: string;
+  type: string;
+  item_name: string;
+  amount_cents: number;
+  details: string;
+  status: string;
+  created_at: string;
+}
+
+export interface Inquiry {
+  id: string;
+  user_email: string;
+  car_make: string;
+  car_model: string;
+  car_year: number;
+  location: string;
+  notes: string;
+  status: string;
+  created_at: string;
+}
+
 export async function teamDb(sql: string) {
   if (typeof window !== 'undefined') return [];
   const { execSync } = await import("node:child_process");
@@ -249,4 +273,16 @@ export async function addCar(ownerId: string, make: string, model: string, year:
   }
 
   return { success: true };
+}
+
+export async function createOrder(userId: string, type: string, itemName: string, amountCents: number, details: string): Promise<void> {
+  const { randomUUID } = await import("node:crypto");
+  const id = randomUUID();
+  await teamDb(`INSERT INTO orders (id, user_id, type, item_name, amount_cents, details) VALUES ('${id}', '${userId}', '${type}', '${itemName.replace(/'/g, "''")}', ${amountCents}, '${details.replace(/'/g, "''")}')`);
+}
+
+export async function createInquiry(email: string, carMake: string, carModel: string, carYear: number, location: string, notes: string): Promise<void> {
+  const { randomUUID } = await import("node:crypto");
+  const id = randomUUID();
+  await teamDb(`INSERT INTO inquiries (id, user_email, car_make, car_model, car_year, location, notes) VALUES ('${id}', '${email}', '${carMake.replace(/'/g, "''")}', '${carModel.replace(/'/g, "''")}', ${carYear}, '${location.replace(/'/g, "''")}', '${notes.replace(/'/g, "''")}')`);
 }

@@ -43,7 +43,22 @@ for (let attempt = 1; ; attempt++) {
       async fetch(req) {
         const { pathname, searchParams } = new URL(req.url);
 
-        // API Routes for Mobile App
+        // Notification email config — owner sets this via env var
+const NOTIFICATION_EMAIL = process.env.MUSCLECARS_NOTIFICATION_EMAIL || 'musclecars-ai-82d550ed@ctomail.io';
+
+// API Routes for Mobile App
+
+        if (pathname === "/api/order" && req.method === 'POST') {
+            const { userId, email, type, itemName, amountCents, details } = await req.json();
+            if (!userId || !type || !itemName) return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+            // Log the order
+            execSync(`team-db "INSERT INTO orders (id, user_id, type, item_name, amount_cents, details) VALUES ('${crypto.randomUUID()}', '${userId}', '${type}', '${itemName.replace(/'/g, "''")}', ${amountCents || 0}, '${(details || "").replace(/'/g, "''")}')"`);
+            return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } });
+        }
+        if (pathname === "/api/notifications" && req.method === 'GET') {
+            const result = execSync(`team-db "SELECT o.*, u.email as user_email FROM orders o JOIN users u ON o.user_id = u.id WHERE o.status = 'pending' ORDER BY o.created_at DESC LIMIT 50"`).toString();
+            return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
         if (pathname === "/api/cars") {
             const result = execSync(`team-db "SELECT * FROM cars WHERE status = 'available'"`).toString();
             return new Response(result, { headers: { 'Content-Type': 'application/json' } });

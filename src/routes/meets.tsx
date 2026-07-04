@@ -323,6 +323,53 @@ function MeetsPage() {
         </div>
       )}
 
+
+      {/* Sponsorship Packages */}
+      <section className="py-24 bg-gradient-to-b from-charcoal to-dark-steel">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 bg-gold/10 text-gold px-4 py-1.5 rounded-full text-[10px] font-black mb-6 tracking-widest uppercase border border-gold/20">
+              EVENT SPONSORSHIP
+            </div>
+            <h2 className="text-5xl md:text-6xl font-black uppercase tracking-tighter italic mb-6">
+              Sponsor Your <span className="text-gold">Meet-up</span>
+            </h2>
+            <p className="text-titanium text-xl max-w-2xl mx-auto leading-relaxed">
+              Let us handle the logistics. We promote, sponsor, and equip your event with premium materials.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {[
+              { name: 'Sponsored Meet-up', price: '$499', cents: 49900, time: '2+ weeks advance', features: ['Major advertising campaigns', 'Email & social promotion', 'Location coordination', 'Banners & promo materials mailed'], color: 'border-gold' },
+              { name: 'Sponsored + Merch', price: '$749', cents: 74900, time: '2+ weeks advance', features: ['Everything in Sponsored', 'Custom MuscleCars.ai merch', 'T-shirts & hats for event', 'Decals for attendees'], color: 'border-racing-red' },
+              { name: 'Premium VIP Experience', price: '$2,499', cents: 249900, time: '4+ weeks advance', features: ['Everything in +Merch', 'Team member hosts event', 'Livestream on social media', 'Pro photography & video', 'Concierge planning'], color: 'border-gold' },
+            ].map((pkg, i) => (
+              <div key={i} className={"bg-dark-steel rounded-3xl overflow-hidden border-t-4 " + pkg.color + " shadow-2xl relative group"}>
+                <div className="p-8">
+                  <h3 className="text-2xl font-black uppercase italic mb-2">{pkg.name}</h3>
+                  <div className="text-4xl font-mono font-black text-gold mb-2">{pkg.price}</div>
+                  <div className="text-titanium/60 text-[10px] font-bold uppercase tracking-widest mb-6">Requires {pkg.time}</div>
+                  <ul className="space-y-3 mb-8">
+                    {pkg.features.map((f, j) => (
+                      <li key={j} className="flex items-center gap-3 text-titanium text-xs"><div className="w-1.5 h-1.5 bg-gold rounded-full shrink-0" />{f}</li>
+                    ))}
+                  </ul>
+                  <button onClick={async () => {
+                    if (!user) return;
+                    if (!confirm("Confirm sponsorship: " + pkg.name + " for " + pkg.price + "?")) return;
+                    await fetch("/api/order", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({userId: user.id, email: user.email, type: "sponsorship", itemName: pkg.name, amountCents: pkg.cents, details: "Meet sponsorship: " + pkg.name}) });
+                    alert("Sponsorship request submitted! We will contact you within 24 hours.");
+                  }} className="w-full bg-gold/10 text-gold border border-gold/30 hover:bg-gold hover:text-charcoal transition-all py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest">
+                    Book Now
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <Footer />
     </div>
   );
