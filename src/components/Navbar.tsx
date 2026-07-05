@@ -32,9 +32,12 @@ export const Navbar = () => {
     <>
       <nav className="bg-charcoal text-white py-4 border-b border-white/5 sticky top-0 z-50 backdrop-blur-md bg-charcoal/90">
         <div className="container mx-auto px-4 flex justify-between items-center">
-          <div className="flex items-center gap-2 font-black text-2xl tracking-tighter group cursor-pointer">
-            <Car className="text-racing-red group-hover:scale-110 transition-transform" size={28} />
-            <span onClick={() => window.location.href = '/'}>MUSCLECARS<span className="text-racing-red">.AI</span></span>
+          <div className="flex items-center gap-2 group cursor-pointer" onClick={() => window.location.href = '/'}>
+            <img
+              src="/src/assets/logo.png"
+              alt="MuscleCars.ai"
+              className="h-9 w-auto object-contain drop-shadow-lg group-hover:scale-105 transition-transform"
+            />
           </div>
           
           <div className="hidden md:flex gap-10 font-bold uppercase text-[10px] tracking-[0.2em] text-titanium">
@@ -54,8 +57,8 @@ export const Navbar = () => {
               Meetups
               <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-gold transition-all group-hover:w-full" />
             </a>
-            <a href="/shop" className="hover:text-white transition-colors relative group">
-              Shop
+            <a href="https://dcreaz-6z.myshopify.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors relative group">
+              Merchandise
               <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-gold transition-all group-hover:w-full" />
             </a>
             <a href="/partners" className="hover:text-white transition-colors relative group">
@@ -116,7 +119,7 @@ export const Navbar = () => {
             <a href="/articles" className="block text-titanium font-bold uppercase text-xs tracking-widest hover:text-white py-2" onClick={() => setMobileMenuOpen(false)}>Articles</a>
             <a href="/premium-library" className="block text-titanium font-bold uppercase text-xs tracking-widest hover:text-white py-2" onClick={() => setMobileMenuOpen(false)}>Library</a>
             <a href="/meets" className="block text-titanium font-bold uppercase text-xs tracking-widest hover:text-white py-2" onClick={() => setMobileMenuOpen(false)}>Meetups</a>
-            <a href="/shop" className="block text-titanium font-bold uppercase text-xs tracking-widest hover:text-white py-2" onClick={() => setMobileMenuOpen(false)}>Shop</a>
+            <a href="https://dcreaz-6z.myshopify.com" target="_blank" rel="noopener noreferrer" className="block text-titanium font-bold uppercase text-xs tracking-widest hover:text-white py-2">Merchandise</a>
             <a href="/partners" className="block text-titanium font-bold uppercase text-xs tracking-widest hover:text-white py-2" onClick={() => setMobileMenuOpen(false)}>Partners</a>
             <a href="/referral" className="block text-titanium font-bold uppercase text-xs tracking-widest hover:text-white py-2" onClick={() => setMobileMenuOpen(false)}>Referrals</a>
             <a href="/sell" className="block bg-racing-red px-6 py-3 rounded-lg font-black uppercase text-xs tracking-widest text-center">Sell Vehicle</a>

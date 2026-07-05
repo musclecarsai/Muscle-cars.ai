@@ -7,11 +7,11 @@ import { getUser, createUser, createOrder } from "../lib/db";
 import { ShoppingBag, Shirt, Tag, Image, Star } from "lucide-react";
 
 const ITEMS = [
-  { id: "t-shirt", title: "MuscleCars.ai T-Shirt", price: "$29.99", cents: 2999, desc: "Premium cotton tee with embroidered logo. Available in black and charcoal.", img: "/src/assets/ebook-covers/guide-american-icons.png", icon: "shirt" },
-  { id: "tag", title: "Embroidered Logo Hat", price: "$24.99", cents: 2499, desc: "Classic dad-hat style with embroidered MuscleCars.ai logo.", img: "/src/assets/ebook-covers/guide-engine-mastery.png", icon: "tag" },
-  { id: "hoodie", title: "MuscleCars.ai Hoodie", price: "$54.99", cents: 5499, desc: "Heavyweight fleece hoodie. Raglan sleeves, kangaroo pocket, embroidered chest logo.", img: "/src/assets/ebook-covers/guide-performance-tuning.png", icon: "bag" },
-  { id: "decals", title: "Decal / Sticker Pack", price: "$9.99", cents: 999, desc: "Set of 3 premium vinyl decals. Weatherproof for garage, toolbox, or bumper.", img: "/src/assets/ebook-covers/guide-market-trends.png", icon: "image" },
-  { id: "banners", title: "Event / Partner Banner", price: "$49.99", cents: 4999, desc: "Full-color 3ft x 6ft vinyl banner. Perfect for car meets and showrooms.", img: "/src/assets/ebook-covers/guide-investment-grade.png", icon: "star" },
+  { id: "t-shirt", title: "MuscleCars.ai T-Shirt", price: "$29.99", cents: 2999, desc: "Premium cotton tee with embroidered logo. Available in black and charcoal.", img: "/src/assets/garage-shop/merch-tshirt.png", icon: "shirt" },
+  { id: "tag", title: "Embroidered Logo Hat", price: "$24.99", cents: 2499, desc: "Classic dad-hat style with embroidered MuscleCars.ai logo.", img: "/src/assets/garage-shop/merch-hat.png", icon: "tag" },
+  { id: "hoodie", title: "MuscleCars.ai Hoodie", price: "$54.99", cents: 5499, desc: "Heavyweight fleece hoodie. Raglan sleeves, kangaroo pocket, embroidered chest logo.", img: "/src/assets/garage-shop/merch-hoodie.png", icon: "bag" },
+  { id: "decals", title: "Decal / Sticker Pack", price: "$9.99", cents: 999, desc: "Set of 3 premium vinyl decals. Weatherproof for garage, toolbox, or bumper.", img: "/src/assets/garage-shop/merch-decals.png", icon: "image" },
+  { id: "banners", title: "Event / Partner Banner", price: "$49.99", cents: 4999, desc: "Full-color 3ft x 6ft vinyl banner. Perfect for car meets and showrooms.", img: "/src/assets/garage-shop/merch-banner.png", icon: "star" },
 ];
 
 const getData = createServerFn({ method: "GET" })
@@ -54,13 +54,17 @@ function ShopPage() {
   };
 
   const handleBuy = async (item: { id: string; title: string; cents: number }) => {
-    if (!user) { navigate({ to: '/', search: { email: undefined } }); return; }
     setProcessing(item.id);
-    try {
-      const result = await purchaseFn({ data: { userId: user.id, email: user.email, itemName: item.title, itemId: item.id, cents: item.cents } });
-      if (result.stripeUrl) window.location.href = result.stripeUrl;
-    } catch { alert("Purchase failed. Try again."); }
-    finally { setProcessing(null); }
+    // Direct Stripe links (no login required)
+    const stripeLinks: Record<string, string> = {
+      't-shirt': 'https://buy.stripe.com/bJe4gz0al2Bad0ZflQ1Nu0o',
+      'tag': 'https://buy.stripe.com/8x29AT7CNfnWd0Z5Lg1Nu0p',
+      'hoodie': 'https://buy.stripe.com/cNi6oH0al7VuaSR2z41Nu0r',
+      'decals': 'https://buy.stripe.com/14fAfZh2it1x64utgpU1Nu0s',
+      'banners': 'https://buy.stripe.com/cNicN58GRa3Cd0Z3D81Nu0q',
+    };
+    const url = stripeLinks[item.id] || stripeLinks['t-shirt'];
+    window.location.href = url;
   };
 
   return (

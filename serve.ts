@@ -179,6 +179,27 @@ const NOTIFICATION_EMAIL = process.env.MUSCLECARS_NOTIFICATION_EMAIL || 'colin@m
           }
         }
 
+        // Garage Shop merch images
+        if (pathname.startsWith("/src/assets/garage-shop/")) {
+          const filename = pathname.replace("/src/assets/garage-shop/", "");
+          const imagePath = `/home/team/shared/site/src/assets/garage-shop/${filename}`;
+          const image = Bun.file(imagePath);
+          if (await image.exists()) {
+            const ext = filename.split('.').pop()?.toLowerCase();
+            const mimeTypes: Record<string, string> = { 'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'svg': 'image/svg+xml', 'webp': 'image/webp' };
+            return new Response(image, { headers: { "Content-Type": mimeTypes[ext || ''] || 'application/octet-stream' } });
+          }
+        }
+
+        // Logo
+        if (pathname.startsWith("/src/assets/logo.png")) {
+          const imagePath = `/home/team/shared/site/src/assets/logo.png`;
+          const image = Bun.file(imagePath);
+          if (await image.exists()) {
+            return new Response(image, { headers: { "Content-Type": "image/png" } });
+          }
+        }
+
         // Carbon fiber texture
         if (pathname.startsWith("/src/assets/carbon-fiber.png")) {
           const imagePath = `/home/team/shared/site/src/assets/carbon-fiber.png`;
