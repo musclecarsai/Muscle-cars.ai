@@ -48,6 +48,21 @@ const NOTIFICATION_EMAIL = process.env.MUSCLECARS_NOTIFICATION_EMAIL || 'musclec
 
 // API Routes for Mobile App
 
+
+        if (pathname === "/api/notify-owner" && req.method === 'POST') {
+            const { type, itemName, customerName, customerEmail, details } = await req.json();
+            if (!type || !itemName) return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
+            // Log to DB — the agent or owner can poll this endpoint for pending notifications
+            const { randomUUID } = await import("node:crypto");
+            const id = randomUUID();
+            const ownerEmail = process.env.MUSCLECARS_NOTIFICATION_EMAIL || process.env.OWNER_EMAIL || 'musclecars-ai-82d550ed@ctomail.io';
+            execSync(`team-db "INSERT INTO notifications (id, type, item_name, customer_name, customer_email, details, owner_email) VALUES ('${id}', '${type}', '${itemName.replace(/'/g, "''")}', '${(customerName || "").replace(/'/g, "''")}', '${(customerEmail || "").replace(/'/g, "''")}', '${(details || "").replace(/'/g, "''")}', '${ownerEmail}')"`);
+            return new Response(JSON.stringify({ success: true, notificationId: id }), { headers: { 'Content-Type': 'application/json' } });
+        }
+        if (pathname === "/api/notifications/pending" && req.method === 'GET') {
+            const result = execSync(`team-db "SELECT * FROM notifications WHERE status = 'pending' OR status IS NULL ORDER BY created_at DESC LIMIT 50"`).toString();
+            return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
         if (pathname === "/api/order" && req.method === 'POST') {
             const { userId, email, type, itemName, amountCents, details } = await req.json();
             if (!userId || !type || !itemName) return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400, headers: { 'Content-Type': 'application/json' } });

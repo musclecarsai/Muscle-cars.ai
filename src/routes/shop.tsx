@@ -27,7 +27,7 @@ const purchaseFn = createServerFn({ method: "POST" })
   .validator((d: { userId: string, email: string, itemName: string, itemId: string, cents: number }) => d)
   .handler(async ({ data }) => {
     await createOrder(data.userId, 'merch', data.itemName, data.cents, "Item: " + data.itemId + ", Email: " + data.email);
-    const links: Record<string, string> = { 't-shirt': 'https://buy.stripe.com/test_merch_tshirt', 'hat': 'https://buy.stripe.com/test_merch_hat', 'hoodie': 'https://buy.stripe.com/test_merch_hoodie', 'decals': 'https://buy.stripe.com/test_merch_decals', 'banners': 'https://buy.stripe.com/test_merch_banners' };
+    const links: Record<string, string> = { 't-shirt': 'https://buy.stripe.com/bJe4gz0al2Bad0ZflQ1Nu0o', 'tag': 'https://buy.stripe.com/8x29AT7CNfnWd0Z5Lg1Nu0p', 'hoodie': 'https://buy.stripe.com/cNi6oH0al7VuaSR2z41Nu0r', 'decals': 'https://buy.stripe.com/14fAfZh2it1x64utgpU1Nu0s', 'banners': 'https://buy.stripe.com/cNicN58GRa3Cd0Z3D81Nu0q' };
     return { success: true, stripeUrl: links[data.itemId] || links['t-shirt'] };
   });
 
