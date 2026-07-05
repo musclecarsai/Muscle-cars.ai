@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { useState, useEffect } from "react";
 import { teamDb } from "../lib/db";
+import { LeadsView } from "../components/LeadsView";
 
 // Server functions for admin data
 const getAdminData = createServerFn({ method: "GET" }).handler(async () => {
@@ -11,6 +12,9 @@ const getAdminData = createServerFn({ method: "GET" }).handler(async () => {
   const valuations = await teamDb("SELECT * FROM valuations");
   const assets = await teamDb("SELECT a.*, u.email FROM assets a JOIN users u ON a.user_id = u.id ORDER BY a.created_at DESC");
   const inspections = await teamDb("SELECT i.*, u.email FROM inspections i JOIN users u ON i.user_id = u.id ORDER BY i.created_at DESC");
+  const deals = await teamDb("SELECT * FROM deals ORDER BY created_at DESC");
+  const orders = await teamDb("SELECT * FROM orders ORDER BY created_at DESC");
+  const notifications = await teamDb("SELECT * FROM notifications ORDER BY created_at DESC");
 
   const totalUsers = users.length;
   const totalRevenue = transactions.reduce((acc: number, t: any) => acc + (t.amount_cents || 0), 0) / 100;
@@ -91,6 +95,9 @@ const getAdminData = createServerFn({ method: "GET" }).handler(async () => {
     userConsumption,
     assets,
     inspections,
+    deals,
+    orders,
+    notifications,
   };
 });
 
@@ -110,7 +117,7 @@ export const Route = createFileRoute("/admin")({
       { name: "description", content: "Analytics, revenue data, and platform management for MuscleCars.ai." },
     ],
   }),
-   AdminPortal,
+  component: AdminPortal,
 });
 
 function AdminPortal() {
@@ -119,7 +126,7 @@ function AdminPortal() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "transactions" | "consumption" | "assets" | "support">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "transactions" | "consumption" | "assets" | "support" | "leads">("dashboard");
   const [selectedUserId, setSelectedUserId] = useState<string>("");
 
   const handleLogin = (e: React.FormEvent) => {
@@ -214,6 +221,7 @@ function AdminPortal() {
                 <TabButton active={activeTab === "transactions"} onClick={() => setActiveTab("transactions")}>Revenue</TabButton>
                 <TabButton active={activeTab === "assets"} onClick={() => setActiveTab("assets")}>Assets</TabButton>
                 <TabButton active={activeTab === "support"} onClick={() => setActiveTab("support")}>Support</TabButton>
+                <TabButton active={activeTab === "leads"} onClick={() => setActiveTab("leads")}>Leads</TabButton>
               </div>
             </div>
             <button
@@ -236,6 +244,7 @@ function AdminPortal() {
         {activeTab === "transactions" && <TransactionsView data={data} />}
         {activeTab === "assets" && <AssetsView data={data} />}
         {activeTab === "support" && <SupportView data={data} onUpdate={fetchData} selectedUserId={selectedUserId} setSelectedUserId={setSelectedUserId} />}
+        {activeTab === "leads" && <LeadsView data={data} />}
       </main>
     </div>
   );
