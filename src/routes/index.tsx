@@ -388,6 +388,60 @@ function Home() {
       </section>
 
       <Pricing onUpgrade={handleUpgrade} />
+
+      {/* Contact Section */}
+      <section className="py-24 bg-dark-steel border-t border-white/5">
+        <div className="container mx-auto px-4 text-center">
+          <div className="inline-flex items-center gap-2 bg-gold/10 text-gold px-4 py-1.5 rounded-full text-[10px] font-black mb-6 tracking-widest uppercase border border-gold/20">
+            GET IN TOUCH
+          </div>
+          <h2 className="text-5xl md:text-6xl font-black uppercase tracking-tighter italic mb-6">
+            Contact <span className="text-gold">Us</span>
+          </h2>
+          <p className="text-titanium text-xl max-w-2xl mx-auto mb-16">
+            Questions, partnerships, or high-value consignments — reach out to the owner directly.
+          </p>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-5xl mx-auto">
+            <div className="bg-charcoal border border-white/5 rounded-2xl p-8 hover:border-gold/30 transition-all">
+              <div className="w-14 h-14 bg-gold/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-gold/20">
+                <svg className="text-gold" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              </div>
+              <h3 className="font-black uppercase text-sm mb-2">Owner / Operator</h3>
+              <p className="text-gold text-lg font-bold">Colin Dorman</p>
+              <p className="text-titanium text-xs mt-2">Direct line for dealers and serious collectors</p>
+            </div>
+            
+            <div className="bg-charcoal border border-white/5 rounded-2xl p-8 hover:border-gold/30 transition-all">
+              <div className="w-14 h-14 bg-gold/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-gold/20">
+                <svg className="text-gold" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              </div>
+              <h3 className="font-black uppercase text-sm mb-2">Phone</h3>
+              <p className="text-white text-lg font-bold">(610) 931-3829</p>
+              <p className="text-titanium text-xs mt-2">Call or text — 9am-6pm EST</p>
+            </div>
+            
+            <div className="bg-charcoal border border-white/5 rounded-2xl p-8 hover:border-gold/30 transition-all">
+              <div className="w-14 h-14 bg-gold/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-gold/20">
+                <svg className="text-gold" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              </div>
+              <h3 className="font-black uppercase text-sm mb-2">General Inquiries</h3>
+              <p className="text-white text-lg font-bold">info@musclecars.ai</p>
+              <p className="text-titanium text-xs mt-2">Questions about memberships and services</p>
+            </div>
+            
+            <div className="bg-charcoal border border-white/5 rounded-2xl p-8 hover:border-gold/30 transition-all">
+              <div className="w-14 h-14 bg-gold/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-gold/20">
+                <svg className="text-gold" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <h3 className="font-black uppercase text-sm mb-2">Support</h3>
+              <p className="text-white text-lg font-bold">support@musclecars.ai</p>
+              <p className="text-titanium text-xs mt-2">Technical support and account help</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <Footer />
     </div>
   );

@@ -358,7 +358,10 @@ function MeetsPage() {
                   <button onClick={async () => {
                     if (!user) return;
                     if (!confirm("Confirm sponsorship: " + pkg.name + " for " + pkg.price + "?")) return;
-                    await fetch("/api/order", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({userId: user.id, email: user.email, type: "sponsorship", itemName: pkg.name, amountCents: pkg.cents, details: "Meet sponsorship: " + pkg.name}) });
+                    const sponsorLinks: Record<string, string> = { 'Sponsored Meet-up': 'https://buy.stripe.com/28E5kDcX70t23qpehM1Nu0v', 'Sponsored + Merch': 'https://buy.stripe.com/dRm28r7CNcbK7GFgpU1Nu0w', 'Premium VIP Experience': 'https://buy.stripe.com/00wdR9e1b2Ba4utehM1Nu0x' };
+                      const sl = sponsorLinks[pkg.name];
+                      if (sl) { window.open(sl, '_blank'); }
+                      await fetch("/api/order", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({userId: user.id, email: user.email, type: "sponsorship", itemName: pkg.name, amountCents: pkg.cents, details: "Meet sponsorship: " + pkg.name}) });
                     alert("Sponsorship request submitted! We will contact you within 24 hours.");
                   }} className="w-full bg-gold/10 text-gold border border-gold/30 hover:bg-gold hover:text-charcoal transition-all py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest">
                     Book Now

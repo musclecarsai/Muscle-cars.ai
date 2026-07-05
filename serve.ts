@@ -44,7 +44,7 @@ for (let attempt = 1; ; attempt++) {
         const { pathname, searchParams } = new URL(req.url);
 
         // Notification email config — owner sets this via env var
-const NOTIFICATION_EMAIL = process.env.MUSCLECARS_NOTIFICATION_EMAIL || 'musclecars-ai-82d550ed@ctomail.io';
+const NOTIFICATION_EMAIL = process.env.MUSCLECARS_NOTIFICATION_EMAIL || 'colin@musclecars.ai';
 
 // API Routes for Mobile App
 
@@ -55,7 +55,7 @@ const NOTIFICATION_EMAIL = process.env.MUSCLECARS_NOTIFICATION_EMAIL || 'musclec
             // Log to DB — the agent or owner can poll this endpoint for pending notifications
             const { randomUUID } = await import("node:crypto");
             const id = randomUUID();
-            const ownerEmail = process.env.MUSCLECARS_NOTIFICATION_EMAIL || process.env.OWNER_EMAIL || 'musclecars-ai-82d550ed@ctomail.io';
+            const ownerEmail = process.env.MUSCLECARS_NOTIFICATION_EMAIL || process.env.OWNER_EMAIL || 'colin@musclecars.ai';
             execSync(`team-db "INSERT INTO notifications (id, type, item_name, customer_name, customer_email, details, owner_email) VALUES ('${id}', '${type}', '${itemName.replace(/'/g, "''")}', '${(customerName || "").replace(/'/g, "''")}', '${(customerEmail || "").replace(/'/g, "''")}', '${(details || "").replace(/'/g, "''")}', '${ownerEmail}')"`);
             return new Response(JSON.stringify({ success: true, notificationId: id }), { headers: { 'Content-Type': 'application/json' } });
         }
