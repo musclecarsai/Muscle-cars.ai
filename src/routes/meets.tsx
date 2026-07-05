@@ -50,6 +50,12 @@ export const Route = createFileRoute("/meets")({
   },
   loaderDeps: ({ search: { email } }) => ({ email }),
   loader: ({ deps: { email } }) => getPageData({ data: email }),
+  head: () => ({
+    meta: [
+      { title: "Car Meet-ups — MuscleCars.ai" },
+      { name: "description", content: "Organize and sponsor muscle car meet-ups." },
+    ],
+  }),
   component: MeetsPage,
 });
 

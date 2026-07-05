@@ -51,6 +51,12 @@ export const Route = createFileRoute("/referral")({
   },
   loaderDeps: ({ search: { email } }) => ({ email }),
   loader: ({ deps: { email } }) => getPageData({ data: email }),
+  head: () => ({
+    meta: [
+      { title: "Referral Program — MuscleCars.ai" },
+      { name: "description", content: "Earn rewards by referring collectors." },
+    ],
+  }),
   component: ReferralDashboard,
 });
 

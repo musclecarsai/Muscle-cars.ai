@@ -165,6 +165,12 @@ export const Route = createFileRoute("/premium-library")({
   }),
   loaderDeps: ({ search: { email } }) => ({ email }),
   loader: ({ deps: { email } }) => getLibraryData({ data: email }),
+  head: () => ({
+    meta: [
+      { title: "Premium Library — MuscleCars.ai" },
+      { name: "description", content: "Expert muscle car guides and resources." },
+    ],
+  }),
   component: PremiumLibrary,
 });
 

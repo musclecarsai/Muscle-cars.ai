@@ -26,6 +26,12 @@ export const Route = createFileRoute("/partners")({
   validateSearch: (s: Record<string, unknown>) => ({ email: (s.email as string) || undefined }),
   loaderDeps: ({ search: { email } }) => ({ email }),
   loader: ({ deps: { email } }) => getData({ data: email }),
+  head: () => ({
+    meta: [
+      { title: "Verified Partner Program — MuscleCars.ai" },
+      { name: "description", content: "Join the MuscleCars.ai Verified Partner Program." },
+    ],
+  }),
   component: PartnersPage,
 });
 

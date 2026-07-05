@@ -42,6 +42,12 @@ export const Route = createFileRoute("/sell")({
   },
   loaderDeps: ({ search: { email } }) => ({ email }),
   loader: ({ deps: { email } }) => getPageData({ data: email }),
+  head: () => ({
+    meta: [
+      { title: "Sell Your Muscle Car — MuscleCars.ai" },
+      { name: "description", content: "List your muscle car on the premier marketplace." },
+    ],
+  }),
   component: SellPage,
 });
 

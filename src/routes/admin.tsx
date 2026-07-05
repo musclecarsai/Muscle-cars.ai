@@ -104,7 +104,13 @@ const updateUser = createServerFn({ method: "POST" })
   });
 
 export const Route = createFileRoute("/admin")({
-  component: AdminPortal,
+  head: () => ({
+    meta: [
+      { title: "Admin Dashboard — MuscleCars.ai" },
+      { name: "description", content: "Analytics, revenue data, and platform management for MuscleCars.ai." },
+    ],
+  }),
+   AdminPortal,
 });
 
 function AdminPortal() {

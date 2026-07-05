@@ -44,6 +44,12 @@ export const Route = createFileRoute("/photo-suite")({
   },
   loaderDeps: ({ search: { email } }) => ({ email }),
   loader: ({ deps: { email } }) => getSuiteData({ data: email }),
+  head: () => ({
+    meta: [
+      { title: "AI Photo Suite — MuscleCars.ai" },
+      { name: "description", content: "Enhance car listing photos with AI." },
+    ],
+  }),
   component: PhotoSuite,
 });
 

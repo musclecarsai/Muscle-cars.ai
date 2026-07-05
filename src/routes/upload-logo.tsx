@@ -5,7 +5,13 @@ import { Footer } from "../components/Footer";
 import { Upload, CheckCircle2, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/upload-logo")({
-  component: UploadLogoPage,
+  head: () => ({
+    meta: [
+      { title: "Upload Logo — MuscleCars.ai" },
+      { name: "description", content: "Upload a new site logo for MuscleCars.ai." },
+    ],
+  }),
+   UploadLogoPage,
 });
 
 function UploadLogoPage() {

@@ -17,7 +17,13 @@ const submitInquiryFn = createServerFn({ method: "POST" })
   });
 
 export const Route = createFileRoute("/book-inspection")({
-  component: BookInspection,
+  head: () => ({
+    meta: [
+      { title: "Book a Physical Inspection — MuscleCars.ai" },
+      { name: "description", content: "Schedule a 150-point physical inspection for your muscle car. $199 deposit secures your booking." },
+    ],
+  }),
+   BookInspection,
 });
 
 function BookInspection() {
