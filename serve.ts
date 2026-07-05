@@ -48,6 +48,19 @@ const NOTIFICATION_EMAIL = process.env.MUSCLECARS_NOTIFICATION_EMAIL || 'colin@m
 
 // API Routes for Mobile App
 
+        // Logo upload — owner uploads a new logo image
+        if (pathname === "/api/upload-logo" && req.method === 'POST') {
+          const formData = await req.formData();
+          const file = formData.get('logo');
+          if (!file || !(file instanceof File)) return new Response(JSON.stringify({ error: 'No file uploaded' }), { status: 400 });
+          const buffer = await file.arrayBuffer();
+          // Save both versions
+          await Bun.write('/home/team/shared/site/src/assets/logo.png', buffer);
+          await Bun.write('/home/team/shared/site/src/assets/logo-white.png', buffer);
+          // Redeploy the site so the new logo is served
+          try { execSync('cd /home/team/shared/site && sudo NODE_OPTIONS="--max-old-space-size=768" bun run publish 2>&1', { timeout: 30000 }); } catch {}
+          return new Response(JSON.stringify({ success: true, message: 'Logo updated and site redeployed!' }), { headers: { 'Content-Type': 'application/json' } });
+        }
 
         if (pathname === "/api/notify-owner" && req.method === 'POST') {
             const { type, itemName, customerName, customerEmail, details } = await req.json();
@@ -164,6 +177,15 @@ const NOTIFICATION_EMAIL = process.env.MUSCLECARS_NOTIFICATION_EMAIL || 'colin@m
             const ext = filename.split('.').pop()?.toLowerCase();
             const mimeTypes: Record<string, string> = { 'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg' };
             return new Response(image, { headers: { "Content-Type": mimeTypes[ext || ''] || 'application/octet-stream' } });
+          }
+        }
+
+        // Logo image
+        if (pathname === "/src/assets/logo.png") {
+          const imagePath = `/home/team/shared/site/src/assets/logo.png`;
+          const image = Bun.file(imagePath);
+          if (await image.exists()) {
+            return new Response(image, { headers: { "Content-Type": "image/png" } });
           }
         }
 
