@@ -9,6 +9,7 @@ export const Footer = () => {
         </div>
         <div className="flex gap-6 flex-wrap justify-center">
           <a href="/upload-logo" className="hover:text-white transition-colors text-[11px] uppercase tracking-wider">Upload Logo</a>
+          <a href="/outreach-templates" className="hover:text-white transition-colors text-[11px] uppercase tracking-wider">Outreach Templates</a>
           <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
           <a href="#" className="hover:text-white transition-colors">Terms</a>
           <a href="#" className="hover:text-white transition-colors">Privacy</a>
