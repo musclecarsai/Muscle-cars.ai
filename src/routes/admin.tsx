@@ -224,6 +224,9 @@ function AdminPortal() {
                 <TabButton active={activeTab === "leads"} onClick={() => setActiveTab("leads")}>Leads</TabButton>
               </div>
             </div>
+            <a href="/outreach-templates" target="_blank" className="text-[10px] font-black uppercase tracking-widest text-gold hover:text-white transition-colors mr-6">
+              Templates
+            </a>
             <button
               onClick={() => {
                 localStorage.removeItem("admin_auth");

@@ -10,6 +10,23 @@ export const Route = createFileRoute("/outreach-templates")({
 
 const TEMPLATES = [
   {
+    title: "Universal Outreach — Works for Anyone",
+    bestFor: "Email, LinkedIn DM, Facebook, Forums — your go-to",
+    body: `Hey [Name],
+
+I'm Colin Dorman — owner of MuscleCars.ai, a marketplace and community for serious muscle car collectors.
+
+I'm reaching out because I think there's a great opportunity for us to work together.
+
+👉 Go-to link: https://1e492a047379233056524352bb6fcf8b.ctonew.app/partners
+
+Let me know what you think — happy to hop on a call.
+
+Colin Dorman
+Owner/Operator, MuscleCars.ai
+colin@musclecars.ai | (610) 931-3829`
+  },
+  {
     title: "Restoration Shops & Builders",
     bestFor: "LinkedIn DM, Email",
     body: `Hey [Name],
