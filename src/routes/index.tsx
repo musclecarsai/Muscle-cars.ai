@@ -310,6 +310,74 @@ function Home() {
       </section>
 
       <GarageShop onBuy={handleBuy} />
+
+      {/* Merchandise Section — Shop Branded Gear */}
+      <section className="py-32 bg-gradient-to-b from-charcoal to-dark-steel relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-1/3 h-full bg-gold/5 skew-x-[12deg] -translate-x-1/4" />
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 bg-gold/10 text-gold px-4 py-1.5 rounded-full text-[10px] font-black mb-6 tracking-widest uppercase border border-gold/20">
+              OFFICIAL GEAR
+            </div>
+            <h2 className="text-5xl md:text-6xl font-black uppercase tracking-tighter italic mb-6">
+              Rep the <span className="text-gold">Brand</span>
+            </h2>
+            <p className="text-titanium text-xl max-w-2xl mx-auto leading-relaxed">
+              Premium MuscleCars.ai merchandise. Look the part at your next car meet, show, or cruise-in.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+            <a href="https://dcreaz-6z.myshopify.com" target="_blank" rel="noopener noreferrer" className="group bg-dark-steel rounded-2xl overflow-hidden border border-white/5 hover:border-gold/30 transition-all">
+              <div className="aspect-square bg-gradient-to-br from-charcoal to-dark-steel flex items-center justify-center p-8">
+                <img src="/src/assets/garage-shop/merch-tshirt.png" alt="T-Shirt" className="w-full h-full object-contain opacity-80 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <div className="p-5 text-center">
+                <h3 className="text-white font-black uppercase text-sm tracking-tight">T-Shirt</h3>
+                <p className="text-gold font-bold text-lg font-mono">$29.99</p>
+              </div>
+            </a>
+
+            <a href="https://dcreaz-6z.myshopify.com" target="_blank" rel="noopener noreferrer" className="group bg-dark-steel rounded-2xl overflow-hidden border border-white/5 hover:border-gold/30 transition-all">
+              <div className="aspect-square bg-gradient-to-br from-charcoal to-dark-steel flex items-center justify-center p-8">
+                <img src="/src/assets/garage-shop/merch-hat.png" alt="Hat" className="w-full h-full object-contain opacity-80 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <div className="p-5 text-center">
+                <h3 className="text-white font-black uppercase text-sm tracking-tight">Hat</h3>
+                <p className="text-gold font-bold text-lg font-mono">$24.99</p>
+              </div>
+            </a>
+
+            <a href="https://dcreaz-6z.myshopify.com" target="_blank" rel="noopener noreferrer" className="group bg-dark-steel rounded-2xl overflow-hidden border border-white/5 hover:border-gold/30 transition-all">
+              <div className="aspect-square bg-gradient-to-br from-charcoal to-dark-steel flex items-center justify-center p-8">
+                <img src="/src/assets/garage-shop/merch-hoodie.png" alt="Hoodie" className="w-full h-full object-contain opacity-80 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <div className="p-5 text-center">
+                <h3 className="text-white font-black uppercase text-sm tracking-tight">Hoodie</h3>
+                <p className="text-gold font-bold text-lg font-mono">$54.99</p>
+              </div>
+            </a>
+
+            <a href="https://dcreaz-6z.myshopify.com" target="_blank" rel="noopener noreferrer" className="group bg-dark-steel rounded-2xl overflow-hidden border border-white/5 hover:border-gold/30 transition-all">
+              <div className="aspect-square bg-gradient-to-br from-charcoal to-dark-steel flex items-center justify-center p-8">
+                <img src="/src/assets/garage-shop/merch-decals.png" alt="Decals" className="w-full h-full object-contain opacity-80 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <div className="p-5 text-center">
+                <h3 className="text-white font-black uppercase text-sm tracking-tight">Decals</h3>
+                <p className="text-gold font-bold text-lg font-mono">$9.99</p>
+              </div>
+            </a>
+          </div>
+
+          <div className="text-center mt-12">
+            <a href="https://dcreaz-6z.myshopify.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 bg-gold text-charcoal px-10 py-4 rounded-xl font-black uppercase text-sm tracking-widest hover:scale-105 transition-all shadow-[0_10px_40px_rgba(201,168,76,0.2)]">
+              Visit the Shop
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+        </div>
+      </section>
+
       <FreeResources 
         onDownload={handleDownload} 
         onViewPremium={() => navigate({ to: '/premium-library', search: (prev) => prev })}
