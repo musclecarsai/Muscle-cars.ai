@@ -149,11 +149,6 @@ function Home() {
   };
 
   const handleBuy = async (item: { title: string, price: string }) => {
-    if (!user) {
-      alert("Please login first (add ?email=your@email.com to the URL)");
-      return;
-    }
-
     // Stripe Payment Link Map — redirect every Buy button to its real checkout page
     const STRIPE_LINKS: Record<string, string> = {
       'Single Valuation': 'https://buy.stripe.com/4gMeVd1ep6Rq7GF5Lg1Nu0c',
@@ -166,6 +161,14 @@ function Home() {
       'Verified Inspection': 'https://buy.stripe.com/14AaEXcX7cbK8KJ2z41Nu0l',
       'Portfolio Export': 'https://buy.stripe.com/9B6cN55uFa3C6CB7To1Nu0m',
     };
+
+    if (!user) {
+      // Open sign-in instead of alert — will redirect to Stripe after login
+      const url = STRIPE_LINKS[item.title];
+      if (url) setPendingUrl(url);
+      setSignInOpen(true);
+      return;
+    }
 
     const stripeUrl = STRIPE_LINKS[item.title];
     if (stripeUrl) {
