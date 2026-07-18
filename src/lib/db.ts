@@ -216,7 +216,68 @@ export function getRemainingListings(user: User): number {
 }
 
 /**
- * Calculate transaction fee for non-subscribers.
+ * Get transaction fee percentage based on user's subscription tier.
+ * This is the conversion mechanism — free users see higher fees and are
+ * incentivized to subscribe.
+ * 
+ * Fee Structure:
+ * - Free/Starter: 4.5% (highest fee — motivates upgrade)
+ * - Enthusiast ($29/mo): 1%
+ * - Entrepreneur ($79/mo): 1%
+ * - Professional ($249/mo): 0%
+ * - Dealership/Verified Partner ($99/mo): 0%
+ */
+export function getTransactionFee(tier: string): number {
+  switch (tier) {
+    case 'starter': return 0.045;
+    case 'enthusiast': return 0.01;
+    case 'entrepreneur': return 0.01;
+    case 'professional': return 0;
+    case 'dealership': return 0;
+    default: return 0.045;
+  }
+}
+
+export interface Sale {
+  id: string;
+  buyer_id: string;
+  seller_id: string;
+  car_id: string;
+  sale_price: number;
+  fee_percent: number;
+  fee_amount: number;
+  net_to_seller: number;
+  status: 'pending' | 'completed' | 'cancelled';
+  created_at: string;
+}
+
+export async function createSale(buyerId: string, sellerId: string, carId: string, salePrice: number, feePercent: number): Promise<Sale> {
+  const { randomUUID } = await import("node:crypto");
+  const id = randomUUID();
+  const feeAmount = Math.round(salePrice * feePercent);
+  const netToSeller = salePrice - feeAmount;
+  await teamDb(`INSERT INTO sales (id, buyer_id, seller_id, car_id, sale_price, fee_percent, fee_amount, net_to_seller, status) VALUES ('${id}', '${buyerId}', '${sellerId}', '${carId}', ${salePrice}, ${feePercent}, ${feeAmount}, ${netToSeller}, 'pending')`);
+  // Log to transactions table as well
+  await logTransaction(buyerId, 'car_purchase', carId, salePrice);
+  // Mark car as sold
+  await teamDb(`UPDATE cars SET status = 'sold' WHERE id = '${carId}'`);
+  return { id, buyer_id: buyerId, seller_id: sellerId, car_id: carId, sale_price: salePrice, fee_percent: feePercent, fee_amount: feeAmount, net_to_seller: netToSeller, status: 'pending', created_at: new Date().toISOString() };
+}
+
+export async function getSales(): Promise<Sale[]> {
+  return teamDb("SELECT * FROM sales ORDER BY created_at DESC");
+}
+
+export async function getSalesBySeller(sellerId: string): Promise<Sale[]> {
+  return teamDb(`SELECT * FROM sales WHERE seller_id = '${sellerId}' ORDER BY created_at DESC`);
+}
+
+export async function getSalesByBuyer(buyerId: string): Promise<Sale[]> {
+  return teamDb(`SELECT * FROM sales WHERE buyer_id = '${buyerId}' ORDER BY created_at DESC`);
+}
+
+/**
+ * Calculate transaction fee for non-subscribers (legacy, kept for backward compat).
  * - Under $25k: 7.5%
  * - $25k-$75k: 5.5%
  * - $75k+: 4.5%

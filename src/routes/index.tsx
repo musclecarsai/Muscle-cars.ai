@@ -8,6 +8,8 @@ import {
   incrementValuation, 
   incrementGuide, 
   logTransaction,
+  getTransactionFee,
+  createSale,
   getUserByReferralCode,
   createReferral,
   getReferrals,
@@ -90,6 +92,18 @@ const logTransactionFn = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+const processCarPurchaseFn = createServerFn({ method: "POST" })
+  .validator((data: { buyerId: string, sellerId: string, carId: string, salePrice: number, feePercent: number }) => data)
+  .handler(async ({ data }) => {
+    const sale = await createSale(data.buyerId, data.sellerId, data.carId, data.salePrice, data.feePercent);
+    // Send notification to owner
+    const { execSync } = await import("node:child_process");
+    try {
+      execSync(`team-db "INSERT INTO notifications (type, message, details) VALUES ('car_sale', 'Car purchased: $${sale.sale_price.toLocaleString()}', 'Buyer: ${data.buyerId} | Seller: ${data.sellerId} | Car: ${data.carId} | Fee: ${sale.fee_percent * 100}% | Net to seller: $${sale.net_to_seller.toLocaleString()}')"`);
+    } catch (_) {}
+    return { success: true, sale };
+  });
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -115,6 +129,7 @@ function Home() {
   const [emailCapture, setEmailCapture] = useState<{ open: boolean, guideTitle: string }>({ open: false, guideTitle: "" });
   const [signInOpen, setSignInOpen] = useState(false);
   const [pendingUrl, setPendingUrl] = useState<string | null>(null);
+  const [buyConfirm, setBuyConfirm] = useState<{ open: boolean, car: Car | null, feePercent: number, feeAmount: number, netToSeller: number }>({ open: false, car: null, feePercent: 0, feeAmount: 0, netToSeller: 0 });
 
   const handleAnalyze = async () => {
     if (!user) {
@@ -183,6 +198,47 @@ function Home() {
     await logTransactionFn({ data: { userId: user.id, type: 'micro-transaction', itemId: item.title, amountCents: priceCents } });
     alert(`Purchase logged: ${item.title} for ${item.price}! (Stripe redirect not yet configured)`);
     navigate({ search: (prev) => prev });
+  };
+
+  const handleCarBuy = async (car: Car) => {
+    if (!user) {
+      setSignInOpen(true);
+      return;
+    }
+
+    const feePercent = getTransactionFee(user.tier);
+    const feeAmount = Math.round(car.price * feePercent);
+    const netToSeller = car.price - feeAmount;
+
+    setBuyConfirm({
+      open: true,
+      car,
+      feePercent,
+      feeAmount,
+      netToSeller,
+    });
+  };
+
+  const handleConfirmBuy = async () => {
+    if (!buyConfirm.car || !user) return;
+    const car = buyConfirm.car;
+
+    // Process the purchase
+    const result = await processCarPurchaseFn({ data: { 
+      buyerId: user.id, 
+      sellerId: car.owner_id, 
+      carId: car.id, 
+      salePrice: car.price, 
+      feePercent: buyConfirm.feePercent 
+    }});
+
+    if (result.success) {
+      alert(`Purchase confirmed! ${car.year} ${car.make} ${car.model} - ${car.price.toLocaleString()}\nFee: ${(buyConfirm.feePercent * 100).toFixed(1)}% (${buyConfirm.feeAmount.toLocaleString()})\nSeller receives: ${buyConfirm.netToSeller.toLocaleString()}\n\nStatus: pending (payment processing) — owner has been notified.`);
+      setBuyConfirm({ open: false, car: null, feePercent: 0, feeAmount: 0, netToSeller: 0 });
+      navigate({ search: (prev) => prev });
+    } else {
+      alert("Purchase failed. Please try again.");
+    }
   };
 
     const handleUpgrade = async (tier: string, price: string) => {
@@ -273,6 +329,62 @@ function Home() {
         onSignedIn={handleSignInSuccess}
       />
 
+      {/* Buy Confirmation Modal */}
+      {buyConfirm.open && buyConfirm.car && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal/80 backdrop-blur-sm p-4">
+          <div className="bg-dark-steel border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl">
+            <div className="flex items-center gap-3 text-racing-red font-black mb-6 tracking-[0.3em] text-xs">
+              <div className="w-8 h-[2px] bg-racing-red" />
+              CONFIRM PURCHASE
+            </div>
+            
+            <h3 className="text-2xl font-black text-white mb-2 italic">{buyConfirm.car.year} {buyConfirm.car.make} {buyConfirm.car.model}</h3>
+            
+            <div className="space-y-3 my-6 p-4 bg-charcoal rounded-xl border border-white/5">
+              <div className="flex justify-between items-center">
+                <span className="text-titanium text-xs font-black uppercase tracking-wider">Sale Price</span>
+                <span className="text-white font-mono font-black text-lg">${buyConfirm.car.price.toLocaleString()}</span>
+              </div>
+              <div className="border-t border-white/5 my-2" />
+              <div className="flex justify-between items-center">
+                <span className="text-titanium text-xs font-black uppercase tracking-wider">Buyer Fee</span>
+                <span className={`font-mono font-black ${buyConfirm.feePercent > 0 ? 'text-racing-red' : 'text-emerald'}`}>
+                  {(buyConfirm.feePercent * 100).toFixed(1)}%
+                  {buyConfirm.feePercent > 0 && <span className="text-titanium ml-1">(${buyConfirm.feeAmount.toLocaleString()})</span>}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-titanium text-xs font-black uppercase tracking-wider">Seller Receives</span>
+                <span className="text-emerald font-mono font-black">${buyConfirm.netToSeller.toLocaleString()}</span>
+              </div>
+            </div>
+
+            {buyConfirm.feePercent > 0 && (
+              <div className="mb-4 p-3 bg-racing-red/10 border border-racing-red/20 rounded-lg">
+                <p className="text-[10px] font-black uppercase tracking-wider text-racing-red text-center">
+                  Upgrade to Enthusiast ($29/mo) to reduce fee to 1% — Professional tier pays 0%!
+                </p>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setBuyConfirm({ open: false, car: null, feePercent: 0, feeAmount: 0, netToSeller: 0 })}
+                className="flex-1 border border-white/10 text-titanium py-3 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-white/5 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmBuy}
+                className="flex-1 bg-emerald hover:bg-emerald/80 text-white py-3 rounded-lg font-bold text-xs uppercase tracking-widest transition-all"
+              >
+                Confirm Purchase
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Marketplace Section */}
       <section className="py-24 bg-carbon-fiber" id="marketplace">
         <div className="container mx-auto px-4">
@@ -296,7 +408,9 @@ function Home() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {cars.map((car) => (
+            {cars.map((car) => {
+              const currentFee = user ? getTransactionFee(user.tier) : 0.045;
+              return (
               <CarCard 
                 key={car.id} 
                 id={car.id}
@@ -305,9 +419,14 @@ function Home() {
                 mileage={`${car.mileage.toLocaleString()} MI`}
                 year={car.year.toString()}
                 image={CAR_IMAGES[car.model] || '/src/assets/car-placeholders/camaro-ss-69.png'}
+                status={car.status}
                 onAnalyze={handleAnalyze}
+                onBuy={() => handleCarBuy(car)}
+                feeDisplay={car.status === 'available' ? `${(currentFee * 100).toFixed(1)}%` : undefined}
+                buyerFeePercent={currentFee}
               />
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>

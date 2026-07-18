@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Gauge, ShieldCheck } from 'lucide-react';
+import { Calendar, Gauge, ShieldCheck, ShoppingCart } from 'lucide-react';
 
 interface CarCardProps {
   id: string;
@@ -9,10 +9,15 @@ interface CarCardProps {
   year: string;
   image: string;
   status?: 'available' | 'sold';
+  ownerId?: string;
   onAnalyze?: () => void;
+  onBuy?: () => void;
+  feeDisplay?: string;
+  buyerFeePercent?: number;
 }
 
-export const CarCard = ({ id, title, price, mileage, year, image, status = 'available', onAnalyze }: CarCardProps) => {
+export const CarCard = ({ id, title, price, mileage, year, image, status = 'available', ownerId, onAnalyze, onBuy, feeDisplay, buyerFeePercent }: CarCardProps) => {
+  const isSold = status === 'sold';
   return (
     <div className="bg-dark-steel rounded-xl overflow-hidden border-t-2 border-racing-red card-hover group cursor-pointer relative">
       {/* Status Badge */}
@@ -49,7 +54,7 @@ export const CarCard = ({ id, title, price, mileage, year, image, status = 'avai
           </div>
         </div>
 
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-1.5 text-emerald font-bold text-[10px] uppercase tracking-tighter bg-emerald/10 px-2 py-1 rounded border border-emerald/20">
             <ShieldCheck size={12} />
             <span>Verified</span>
@@ -59,15 +64,40 @@ export const CarCard = ({ id, title, price, mileage, year, image, status = 'avai
           </div>
         </div>
 
-        <button 
-          onClick={(e) => {
-            e.stopPropagation();
-            onAnalyze?.();
-          }}
-          className="w-full mt-6 bg-racing-red hover:bg-racing-red-light text-white py-3 rounded-lg font-bold text-xs uppercase tracking-widest transition-all duration-300"
-        >
-          Analyze Asset
-        </button>
+        {/* Fee display — incentivizes subscriptions */}
+        {feeDisplay && !isSold && (
+          <div className="mb-4 p-2.5 rounded-lg bg-charcoal/60 border border-white/5">
+            <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider">
+              <span className="text-titanium">Buyer Fee</span>
+              <span className={buyerFeePercent && buyerFeePercent > 0 ? 'text-racing-red' : 'text-emerald'}>
+                {buyerFeePercent && buyerFeePercent > 0 ? `${(buyerFeePercent * 100).toFixed(1)}%` : '0%'}
+              </span>
+            </div>
+            {buyerFeePercent && buyerFeePercent > 0 && (
+              <p className="text-[9px] text-titanium/60 mt-1 italic">
+                Upgrade to Enthusiast ($29/mo) to reduce fee to 1%
+              </p>
+            )}
+            {buyerFeePercent === 0 && (
+              <p className="text-[9px] text-emerald/60 mt-1 italic">
+                Elite tier — no transaction fee
+              </p>
+            )}
+          </div>
+        )}
+
+        {!isSold && onBuy ? (
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onBuy();
+            }}
+            className="w-full bg-emerald hover:bg-emerald/80 text-white py-3 rounded-lg font-bold text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2"
+          >
+            <ShoppingCart size={14} />
+            Buy Now
+          </button>
+        ) : <div className="h-12" />}
       </div>
     </div>
   );

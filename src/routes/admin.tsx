@@ -15,6 +15,7 @@ const getAdminData = createServerFn({ method: "GET" }).handler(async () => {
   const deals = await teamDb("SELECT * FROM deals ORDER BY created_at DESC");
   const orders = await teamDb("SELECT * FROM orders ORDER BY created_at DESC");
   const notifications = await teamDb("SELECT * FROM notifications ORDER BY created_at DESC");
+  const sales = await teamDb("SELECT s.*, buyer.email as buyer_email, seller.email as seller_email FROM sales s LEFT JOIN users buyer ON s.buyer_id = buyer.id LEFT JOIN users seller ON s.seller_id = seller.id ORDER BY s.created_at DESC");
 
   const totalUsers = users.length;
   const totalRevenue = transactions.reduce((acc: number, t: any) => acc + (t.amount_cents || 0), 0) / 100;
@@ -98,6 +99,7 @@ const getAdminData = createServerFn({ method: "GET" }).handler(async () => {
     deals,
     orders,
     notifications,
+    sales,
   };
 });
 
@@ -126,7 +128,7 @@ function AdminPortal() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "transactions" | "consumption" | "assets" | "support" | "leads">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "transactions" | "consumption" | "assets" | "support" | "leads" | "sales">("dashboard");
   const [selectedUserId, setSelectedUserId] = useState<string>("");
 
   const handleLogin = (e: React.FormEvent) => {
@@ -222,6 +224,7 @@ function AdminPortal() {
                 <TabButton active={activeTab === "assets"} onClick={() => setActiveTab("assets")}>Assets</TabButton>
                 <TabButton active={activeTab === "support"} onClick={() => setActiveTab("support")}>Support</TabButton>
                 <TabButton active={activeTab === "leads"} onClick={() => setActiveTab("leads")}>Leads</TabButton>
+                <TabButton active={activeTab === "sales"} onClick={() => setActiveTab("sales")}>Sales</TabButton>
               </div>
             </div>
             <a href="/outreach-templates" target="_blank" className="text-[10px] font-black uppercase tracking-widest text-gold hover:text-white transition-colors mr-6">
@@ -248,6 +251,7 @@ function AdminPortal() {
         {activeTab === "assets" && <AssetsView data={data} />}
         {activeTab === "support" && <SupportView data={data} onUpdate={fetchData} selectedUserId={selectedUserId} setSelectedUserId={setSelectedUserId} />}
         {activeTab === "leads" && <LeadsView data={data} />}
+        {activeTab === "sales" && <SalesView data={data} />}
       </main>
     </div>
   );
@@ -538,6 +542,82 @@ function AssetsView({ data }: { data: any }) {
           </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+function SalesView({ data }: { data: any }) {
+  const sales = data.sales || [];
+  const totalRevenue = sales.reduce((acc: number, s: any) => acc + s.sale_price, 0);
+  const totalFees = sales.reduce((acc: number, s: any) => acc + s.fee_amount, 0);
+  const pendingSales = sales.filter((s: any) => s.status === 'pending').length;
+
+  return (
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+        <div className="rounded-xl border border-white/5 bg-dark-steel p-6 shadow-2xl">
+          <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-titanium">Total Sales Volume</p>
+          <p className="text-3xl font-black text-white font-mono tracking-tighter italic">${totalRevenue.toLocaleString()}</p>
+        </div>
+        <div className="rounded-xl border border-white/5 bg-dark-steel p-6 shadow-2xl">
+          <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-titanium">Total Fees Collected</p>
+          <p className="text-3xl font-black text-emerald font-mono tracking-tighter italic">${totalFees.toLocaleString()}</p>
+        </div>
+        <div className="rounded-xl border border-white/5 bg-dark-steel p-6 shadow-2xl">
+          <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-titanium">Pending Transactions</p>
+          <p className="text-3xl font-black text-gold font-mono tracking-tighter italic">{pendingSales}</p>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-xl border border-white/5 bg-dark-steel shadow-2xl">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-charcoal text-[10px] uppercase text-titanium font-black tracking-widest">
+              <tr>
+                <th className="px-6 py-4">Car ID</th>
+                <th className="px-6 py-4">Buyer</th>
+                <th className="px-6 py-4">Seller</th>
+                <th className="px-6 py-4 text-right">Price</th>
+                <th className="px-6 py-4 text-right">Fee %</th>
+                <th className="px-6 py-4 text-right">Fee Amount</th>
+                <th className="px-6 py-4 text-right">Net to Seller</th>
+                <th className="px-6 py-4 text-center">Status</th>
+                <th className="px-6 py-4 text-center">Date</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {sales.map((sale: any) => (
+                <tr key={sale.id} className="hover:bg-white/5 transition-colors">
+                  <td className="px-6 py-4 font-black uppercase italic text-white text-xs">{sale.car_id?.slice(0, 8) || 'N/A'}</td>
+                  <td className="px-6 py-4 font-mono text-xs text-titanium">{sale.buyer_email || 'N/A'}</td>
+                  <td className="px-6 py-4 font-mono text-xs text-titanium">{sale.seller_email || 'N/A'}</td>
+                  <td className="px-6 py-4 text-right font-black text-gold font-mono">${(sale.sale_price || 0).toLocaleString()}</td>
+                  <td className="px-6 py-4 text-right font-mono text-titanium">{(sale.fee_percent * 100).toFixed(1)}%</td>
+                  <td className="px-6 py-4 text-right font-black text-racing-red font-mono">${(sale.fee_amount || 0).toLocaleString()}</td>
+                  <td className="px-6 py-4 text-right font-black text-emerald font-mono">${(sale.net_to_seller || 0).toLocaleString()}</td>
+                  <td className="px-6 py-4 text-center">
+                    <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-tighter ${
+                      sale.status === 'completed' ? 'bg-emerald/10 text-emerald border border-emerald/20' : 
+                      sale.status === 'cancelled' ? 'bg-racing-red/10 text-racing-red border border-racing-red/20' : 
+                      'bg-gold/10 text-gold border border-gold/20'
+                    }`}>
+                      {sale.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-center text-titanium text-[10px] uppercase font-black">
+                    {new Date(sale.created_at).toLocaleDateString()}
+                  </td>
+                </tr>
+              ))}
+              {sales.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="px-6 py-12 text-center text-titanium italic text-xs uppercase tracking-widest">No sales recorded yet. Transactions will appear here when users purchase cars.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
