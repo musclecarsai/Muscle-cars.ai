@@ -264,6 +264,33 @@ const NOTIFICATION_EMAIL = process.env.MUSCLECARS_NOTIFICATION_EMAIL || 'colin@m
           }
         }
 
+        // Sitemap endpoint
+        if (pathname === "/sitemap.xml") {
+          const BASE = "https://1e492a047379233056524352bb6fcf8b.ctonew.app";
+          const pages = [
+            { loc: "/", prio: "1.0", freq: "daily" },
+            { loc: "/articles", prio: "0.9", freq: "weekly" },
+            { loc: "/articles/best-muscle-cars-to-flip-2026", prio: "0.8", freq: "monthly" },
+            { loc: "/articles/how-to-value-classic-muscle-car", prio: "0.8", freq: "monthly" },
+            { loc: "/articles/muscle-car-market-trends-2026", prio: "0.8", freq: "monthly" },
+            { loc: "/articles/professional-inspection-checklist", prio: "0.8", freq: "monthly" },
+            { loc: "/articles/bring-a-trailer-vs-musclecars-ai", prio: "0.8", freq: "monthly" },
+            { loc: "/articles/avoid-buying-clone-vin-verification", prio: "0.7", freq: "monthly" },
+            { loc: "/articles/2026-muscle-car-buyers-guide", prio: "0.7", freq: "monthly" },
+            { loc: "/meets", prio: "0.7", freq: "daily" },
+            { loc: "/partners", prio: "0.7", freq: "weekly" },
+            { loc: "/sell", prio: "0.8", freq: "daily" },
+            { loc: "/shop", prio: "0.6", freq: "weekly" },
+            { loc: "/referral", prio: "0.6", freq: "weekly" },
+            { loc: "/premium-library", prio: "0.6", freq: "weekly" },
+            { loc: "/book-inspection", prio: "0.7", freq: "weekly" },
+            { loc: "/photo-suite", prio: "0.6", freq: "weekly" },
+          ];
+          const urls = pages.map(p => `  <url><loc>${BASE}${p.loc}</loc><changefreq>${p.freq}</changefreq><priority>${p.prio}</priority></url>`).join("\n");
+          const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>`;
+          return new Response(xml, { headers: { "Content-Type": "application/xml; charset=utf-8" } });
+        }
+
         if (pathname !== "/") {
           const file = Bun.file(CLIENT_DIR + pathname);
           if (await file.exists()) return new Response(file);

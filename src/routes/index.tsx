@@ -10,6 +10,7 @@ import {
   logTransaction,
   getTransactionFee,
   createSale,
+  getSales,
   getUserByReferralCode,
   createReferral,
   getReferrals,
@@ -52,6 +53,8 @@ const getPageData = createServerFn({ method: "GET" })
   .validator((data: { email: string | undefined, ref: string | undefined }) => data)
   .handler(async ({ data: { email, ref } }) => {
     const cars = await getCars();
+    const sales = await getSales();
+    const completedSales = sales.filter(s => s.status === 'completed').length;
     let user: User | null = null;
     if (email) {
       const existingUser = await getUser(email);
@@ -68,7 +71,7 @@ const getPageData = createServerFn({ method: "GET" })
         }
       }
     }
-    return { cars, user };
+    return { cars, user, completedSales };
   });
 
 const incrementValuationFn = createServerFn({ method: "POST" })
@@ -123,7 +126,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { cars, user } = Route.useLoaderData();
+  const { cars, user, completedSales } = Route.useLoaderData();
   const navigate = useNavigate({ from: '/' });
   const [paywall, setPaywall] = useState<{ open: boolean, type: 'valuation' | 'guide' }>({ open: false, type: 'valuation' });
   const [emailCapture, setEmailCapture] = useState<{ open: boolean, guideTitle: string }>({ open: false, guideTitle: "" });
@@ -394,6 +397,10 @@ function Home() {
               <p className="text-[10px] font-black uppercase tracking-widest text-titanium">Verified Listings</p>
             </div>
             <div className="space-y-1">
+              <p className="text-3xl font-black text-gold font-mono italic">{completedSales}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-titanium">Cars Sold</p>
+            </div>
+            <div className="space-y-1">
               <p className="text-3xl font-black text-gold font-mono italic">${cars.reduce((sum, c) => sum + c.price, 0).toLocaleString()}</p>
               <p className="text-[10px] font-black uppercase tracking-widest text-titanium">Inventory Value</p>
             </div>
@@ -433,6 +440,21 @@ function Home() {
                   <p className="text-white text-xs font-black uppercase tracking-wider">{testimonial.name}</p>
                   <p className="text-titanium text-[10px] font-bold uppercase tracking-wider">{testimonial.role}</p>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Partner Badges — trust indicators */}
+      <section className="py-8 bg-charcoal border-y border-white/5">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center gap-10 flex-wrap">
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-titanium/50">Trusted Partners:</span>
+            {['Hagerty Certified', 'Mecum Auctions', 'Barrett-Jackson', 'Hemmings', 'Dupont Registry'].map((partner) => (
+              <div key={partner} className="flex items-center gap-2 px-4 py-2 bg-dark-steel rounded-lg border border-white/5 hover:border-gold/20 transition-all">
+                <div className="w-2 h-2 rounded-full bg-emerald shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+                <span className="text-white/60 text-[11px] font-bold uppercase tracking-wider">{partner}</span>
               </div>
             ))}
           </div>

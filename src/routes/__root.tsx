@@ -42,6 +42,39 @@ function RootDocument({ children }: { children: ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "MuscleCars.ai",
+              url: "https://1e492a047379233056524352bb6fcf8b.ctonew.app",
+              description:
+                "Premium muscle car marketplace with AI valuations, portfolio tracking, and expert negotiation for serious collectors.",
+              potentialAction: {
+                "@type": "SearchAction",
+                target:
+                  "https://1e492a047379233056524352bb6fcf8b.ctonew.app/sell?q={search_term_string}",
+                "query-input": "required name=search_term_string",
+              },
+            }),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "MuscleCars.ai",
+              url: "https://1e492a047379233056524352bb6fcf8b.ctonew.app",
+              description:
+                "Digital marketplace for high-performance muscle cars — AI valuations, portfolio management, and professional negotiation services.",
+              sameAs: [],
+            }),
+          }}
+        />
       </head>
       <body>
         {children}
