@@ -41,6 +41,18 @@ const SEO_META: Record<string, { title: string; desc: string }> = {
   "professional-inspection-checklist": {
     title: "Professional Muscle Car Inspection Checklist | Protect Your Investment",
     desc: "50-point professional muscle car inspection checklist. Don't get burned by clones or hidden rust. Expert guide for serious collectors."
+  },
+  "bring-a-trailer-vs-musclecars-ai": {
+    title: "Bring a Trailer vs MuscleCars.ai | Where to Buy Your Next Muscle Car",
+    desc: "Compare Bring a Trailer auctions to the MuscleCars.ai marketplace. Save thousands with 0% buyer fees for subscribers vs 5% auction premiums."
+  },
+  "avoid-buying-clone-vin-verification": {
+    title: "How to Avoid Buying a Clone | VIN Verification Guide for Buyers",
+    desc: "Protect yourself from cloned muscle cars with this 5-step VIN verification guide. Learn to spot re-stamped engines, bogus trim tags, and fake documentation."
+  },
+  "2026-muscle-car-buyers-guide": {
+    title: "2026 Muscle Car Buyer's Guide | What $50K, $100K, and $250K Gets You",
+    desc: "Complete 2026 muscle car buying guide. See what your budget buys across three price tiers, with model recommendations and insider buying strategies."
   }
 };
 

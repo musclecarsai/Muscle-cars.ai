@@ -35,6 +35,30 @@ const ARTICLES = [
     readTime: "5 min read",
     date: "June 20, 2026",
     image: "/src/assets/car-placeholders/camaro-zl1.png"
+  },
+  {
+    slug: "bring-a-trailer-vs-musclecars-ai",
+    title: "Bring a Trailer vs MuscleCars.ai: Where to Buy Your Next Muscle Car",
+    excerpt: "Compare fees, buyer protection, and the auction format vs marketplace model. Save thousands on your next purchase...",
+    readTime: "4 min read",
+    date: "August 1, 2026",
+    image: "/src/assets/car-placeholders/mustang-dark-horse.png"
+  },
+  {
+    slug: "avoid-buying-clone-vin-verification",
+    title: "How to Avoid Buying a Clone: VIN Verification Guide for Buyers",
+    excerpt: "Cloned muscle cars are the #1 threat to buyers in 2026. Learn the 5-step VIN verification process before you get burned...",
+    readTime: "6 min read",
+    date: "August 3, 2026",
+    image: "/src/assets/car-placeholders/challenger-hellcat.png"
+  },
+  {
+    slug: "2026-muscle-car-buyers-guide",
+    title: "2026 Muscle Car Buyer's Guide: What $50K, $100K, and $250K Gets You",
+    excerpt: "From Fox Body Mustangs to Hemi 'Cudas — what your budget buys in today's market, with real buying advice...",
+    readTime: "7 min read",
+    date: "August 5, 2026",
+    image: "/src/assets/car-placeholders/camaro-zl1.png"
   }
 ];
 

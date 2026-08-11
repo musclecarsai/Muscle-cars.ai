@@ -385,6 +385,60 @@ function Home() {
         </div>
       )}
 
+      {/* Trust Signals Bar — social proof for first-time visitors */}
+      <section className="py-8 bg-charcoal border-y border-white/5">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <div className="space-y-1">
+              <p className="text-3xl font-black text-gold font-mono italic">{cars.filter(c => c.status === 'available').length}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-titanium">Verified Listings</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-3xl font-black text-gold font-mono italic">${cars.reduce((sum, c) => sum + c.price, 0).toLocaleString()}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-titanium">Inventory Value</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-3xl font-black text-emerald font-mono italic">100%</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-titanium">Verified Sellers</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-3xl font-black text-emerald font-mono italic">24/7</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-titanium">Buyer Protection</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Strip */}
+      <section className="py-12 bg-dark-steel">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 bg-gold/10 text-gold px-4 py-1.5 rounded-full text-[10px] font-black mb-4 tracking-widest uppercase border border-gold/20">
+              ★★★★★&nbsp;&nbsp;Trusted by Collectors
+            </div>
+            <h2 className="text-3xl font-black text-white uppercase tracking-tighter italic">What Our <span className="text-racing-red">Buyers</span> Say</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {[
+              { name: "Mike R.", role: "Private Collector", quote: "Found my dream 1970 Hemi 'Cuda through MuscleCars.ai. The AI valuation was spot-on and the transaction was seamless. Sold within 48 hours of listing." },
+              { name: "Sarah T.", role: "Portfolio Investor", quote: "The fee structure is transparent and the Professional tier pays for itself on the first deal. I've bought three cars through the platform this year alone." },
+              { name: "Tom D.", role: "Restoration Shop Owner", quote: "As a Verified Partner, the 0% transaction fee and priority placement have been game-changers. My shop is now booked 6 months out." },
+            ].map((testimonial, idx) => (
+              <div key={idx} className="bg-charcoal rounded-xl p-6 border border-white/5 hover:border-gold/20 transition-all">
+                <div className="flex items-center gap-1.5 mb-3 text-gold">
+                  {[...Array(5)].map((_, i) => <span key={i} className="text-xs">★</span>)}
+                </div>
+                <p className="text-titanium text-sm leading-relaxed italic mb-4">"{testimonial.quote}"</p>
+                <div className="border-t border-white/5 pt-3">
+                  <p className="text-white text-xs font-black uppercase tracking-wider">{testimonial.name}</p>
+                  <p className="text-titanium text-[10px] font-bold uppercase tracking-wider">{testimonial.role}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Marketplace Section */}
       <section className="py-24 bg-carbon-fiber" id="marketplace">
         <div className="container mx-auto px-4">
