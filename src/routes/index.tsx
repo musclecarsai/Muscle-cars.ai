@@ -89,9 +89,10 @@ const incrementGuideFn = createServerFn({ method: "POST" })
   });
 
 const logTransactionFn = createServerFn({ method: "POST" })
-  .validator((data: { userId: string, type: string, itemId: string, amountCents: number }) => data)
+  .validator((data: { userId?: string, type: string, itemId: string, amountCents: number }) => data)
   .handler(async ({ data }) => {
-    await logTransaction(data.userId, data.type, data.itemId, data.amountCents);
+    // userId is optional so anonymous (guest) A/B CTA clicks can be logged too.
+    await logTransaction(data.userId ?? 'guest', data.type, data.itemId, data.amountCents);
     return { success: true };
   });
 
@@ -118,6 +119,7 @@ export const Route = createFileRoute("/")({
     return {
       email: (search.email as string) || undefined,
       ref: (search.ref as string) || undefined,
+      cta: (search.cta as string) || undefined,
     };
   },
   loaderDeps: ({ search: { email, ref } }) => ({ email, ref }),
@@ -127,6 +129,7 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const { cars, user, completedSales } = Route.useLoaderData();
+  const { cta } = Route.useSearch();
   const navigate = useNavigate({ from: '/' });
   const [paywall, setPaywall] = useState<{ open: boolean, type: 'valuation' | 'guide' }>({ open: false, type: 'valuation' });
   const [emailCapture, setEmailCapture] = useState<{ open: boolean, guideTitle: string }>({ open: false, guideTitle: "" });
@@ -169,38 +172,51 @@ function Home() {
   const handleBuy = async (item: { title: string, price: string }) => {
     // Stripe Payment Link Map — redirect every Buy button to its real checkout page
     const STRIPE_LINKS: Record<string, string> = {
-      'Single Valuation': 'https://buy.stripe.com/4gMeVd1ep6Rq7GF5Lg1Nu0c',
-      'VIN History Report': 'https://buy.stripe.com/bJe6oHaOZ4Ji3qp3D81Nu0d',
-      'AI Photo Suite': 'https://buy.stripe.com/8x24gz6yJ2Ba3qp5Lg1Nu0e',
-      'Listing Boost': 'https://buy.stripe.com/bJeeVd9KVejS0ed7To1Nu0f',
-      'Featured Meet-up': 'https://buy.stripe.com/00w14n9KV7Vu2ml4Hc1Nu0n',
+      'Single Valuation': 'https://buy.stripe.com/dRmfZhaOZfnW1ih0qW1Nu0G',
+      'VIN History Report': 'https://buy.stripe.com/9B6bJ1g9jgs01ih8Xs1Nu0H',
+      'AI Photo Suite': 'https://buy.stripe.com/3cI6oHaOZ8ZyaSR0qW1Nu0I',
+      'Listing Boost': 'https://buy.stripe.com/6oU4gz5uF2Ba3qp6Pk1Nu0J',
+      'Featured Meet-up': 'https://buy.stripe.com/8x23cv0al7VuaSR2z41Nu0F',
       'Technical eBook': 'https://buy.stripe.com/8x27sL8GR5Nm1ih5Lg1Nu0j',
-      'Payment Negotiation': 'https://buy.stripe.com/3cIaEXf5f3Fe0edehM1Nu0k',
-      'Verified Inspection': 'https://buy.stripe.com/14AaEXcX7cbK8KJ2z41Nu0l',
-      'Portfolio Export': 'https://buy.stripe.com/9B6cN55uFa3C6CB7To1Nu0m',
+      'Payment Negotiation': 'https://buy.stripe.com/fZuaEX2itejSf978Xs1Nu0K',
+      'Verified Inspection': 'https://buy.stripe.com/7sY28r0al6Rqf974Hc1Nu0L',
+      'Portfolio Export': 'https://buy.stripe.com/8x2aEX2ita3C1ih4Hc1Nu0M',
     };
 
-    if (!user) {
-      // Open sign-in instead of alert — will redirect to Stripe after login
-      const url = STRIPE_LINKS[item.title];
-      if (url) setPendingUrl(url);
-      setSignInOpen(true);
-      return;
-    }
-
     const stripeUrl = STRIPE_LINKS[item.title];
+    // One-off Garage Shop purchases are guest-friendly — the launch copy promises
+    // "no account needed." Send the buyer straight to Stripe whether or not they're
+    // logged in; Stripe collects their email for result delivery. Log if signed in.
     if (stripeUrl) {
-      const priceCents = Math.round(parseFloat(item.price.replace('$', '')) * 100);
-      await logTransactionFn({ data: { userId: user.id, type: 'micro-transaction', itemId: item.title, amountCents: priceCents } });
+      if (user) {
+        const priceCents = Math.round(parseFloat(item.price.replace('$', '')) * 100);
+        await logTransactionFn({ data: { userId: user.id, type: 'micro-transaction', itemId: item.title, amountCents: priceCents } });
+      }
       window.location.href = stripeUrl;
       return;
     }
 
-    // Fallback for any items not yet mapped
+    // Fallback for any items not yet mapped — keep an account wall here
+    if (!user) {
+      setPendingUrl(null);
+      setSignInOpen(true);
+      return;
+    }
+
     const priceCents = Math.round(parseFloat(item.price.replace('$', '')) * 100);
     await logTransactionFn({ data: { userId: user.id, type: 'micro-transaction', itemId: item.title, amountCents: priceCents } });
     alert(`Purchase logged: ${item.title} for ${item.price}! (Stripe redirect not yet configured)`);
     navigate({ search: (prev) => prev });
+  };
+
+  // A/B valuation CTA — variant chosen by ?cta=a / ?cta=b (default: a).
+  // Both point to the same $7.49 Single Valuation Stripe link; the click is
+  // logged so the growth team can measure which framing converts.
+  const VAL_LINK = "https://buy.stripe.com/dRmfZhaOZfnW1ih0qW1Nu0G";
+  const ctaVariant = cta === 'b' ? 'b' : 'a';
+  const handleValuationCta = async () => {
+    await logTransactionFn({ data: { userId: user?.id, type: 'cta_click', itemId: `single-valuation-${ctaVariant}`, amountCents: 0 } });
+    window.location.href = VAL_LINK;
   };
 
   const handleCarBuy = async (car: Car) => {
@@ -292,6 +308,18 @@ function Home() {
   return (
     <div className="bg-charcoal min-h-screen text-white selection:bg-racing-red selection:text-white">
       <Navbar />
+      {/* LAUNCH PROMO — 25% off. Primary CTA routes to the $7.49 valuation offer. */}
+      <div className="bg-gradient-to-r from-racing-red via-red-700 to-gold text-white border-b border-gold/40">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-center">
+          <span className="text-xs font-black tracking-[0.2em] uppercase">🔥 Launch Sale — 25% Off</span>
+          <span className="text-sm font-semibold text-white/90">Subscriptions 25% off first 3 months · One-off services 25% off</span>
+          <div className="flex flex-wrap gap-3 justify-center">
+            <button onClick={handleValuationCta} className="bg-white text-racing-red px-3 py-1 rounded font-bold text-xs hover:bg-gold transition">Start with a $7.49 valuation</button>
+            <a href="https://buy.stripe.com/aFa3cv6yJgs0e53ddI1Nu0h" className="bg-white/15 text-white px-3 py-1 rounded font-bold text-xs hover:bg-gold hover:text-racing-red transition">Enthusiast 3mo</a>
+            <a href="https://buy.stripe.com/fZuaEX2itejSf978Xs1Nu0K" className="bg-white/15 text-white px-3 py-1 rounded font-bold text-xs hover:bg-gold hover:text-racing-red transition">Negotiation — $149</a>
+          </div>
+        </div>
+      </div>
       
       {user && (
         <div className="bg-racing-red text-white py-2 text-center text-xs font-black uppercase tracking-[0.2em] flex justify-center gap-6 border-b border-white/10">
@@ -507,6 +535,95 @@ function Home() {
         </div>
       </section>
 
+      {/* ===== BUYER LAUNCH OFFER — $7.49 Instant AI Valuation (entry offer) ===== */}
+      <section className="py-24 bg-gradient-to-b from-dark-steel to-charcoal relative overflow-hidden" id="instant-valuation">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(212,175,55,0.12),transparent_45%)]" />
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left — Copy + CTA */}
+            <div>
+              <div className="inline-flex items-center gap-2 bg-gold/10 text-gold px-4 py-1.5 rounded-full text-[10px] font-black mb-6 tracking-widest uppercase border border-gold/20">
+                INSTANT AI VALUATION · LAUNCH PRICE
+              </div>
+              {ctaVariant === 'b' ? (
+                <>
+                  <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter italic mb-5">
+                    The most expensive mistake is <span className="text-gold">guessing.</span>
+                  </h2>
+                  <p className="text-titanium text-xl mb-8 max-w-xl leading-relaxed">
+                    Find out what it's worth in 60 seconds. Auction buyers who didn't check paid, on
+                    average, for a number they could have known.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter italic mb-5">
+                    Know the <span className="text-gold">real market value</span> before you bid.
+                  </h2>
+                  <p className="text-titanium text-xl mb-8 max-w-xl leading-relaxed">
+                    Stop guessing at auctions and classifieds. Professional-grade AI valuation for any
+                    muscle car in ~60 seconds — no account needed, results delivered instantly.
+                  </p>
+                </>
+              )}
+
+              <button onClick={handleValuationCta} className="group relative inline-flex items-center gap-3 bg-gold text-charcoal px-8 py-4 rounded font-black text-lg uppercase tracking-wide shadow-[0_0_30px_rgba(212,175,55,0.4)] hover:bg-yellow-400 transition">
+                {ctaVariant === 'b' ? "Don't Overpay — Get the True Price" : "Get My Valuation — $7.49"}
+                <span className="text-xl transition group-hover:translate-x-1">→</span>
+              </button>
+
+              <p className="text-sm text-titanium/70 italic mt-4">
+                Less than a tank of gas. 25% off launch pricing for the first 3 months — today only, no coupon needed.
+              </p>
+
+              {/* Trust signals */}
+              <div className="grid sm:grid-cols-3 gap-4 mt-8">
+                <div className="bg-charcoal/60 border border-white/10 rounded-lg p-4">
+                  <div className="text-gold font-black mb-1">60-sec turnaround</div>
+                  <p className="text-sm text-titanium leading-snug">Enter year/make/model, get a market-backed number instantly.</p>
+                </div>
+                <div className="bg-charcoal/60 border border-white/10 rounded-lg p-4">
+                  <div className="text-gold font-black mb-1">No account needed</div>
+                  <p className="text-sm text-titanium leading-snug">Checkout with Stripe. Result delivered right away — no sign-up wall.</p>
+                </div>
+                <div className="bg-charcoal/60 border border-white/10 rounded-lg p-4">
+                  <div className="text-gold font-black mb-1">Real market data</div>
+                  <p className="text-sm text-titanium leading-snug">Trained on real-time auction results, listings &amp; rarity factors — not a guess.</p>
+                </div>
+              </div>
+
+              {/* Upsell — professional negotiation */}
+              <div className="mt-8 border border-gold/30 bg-gold/5 rounded-lg p-5 flex flex-wrap items-center gap-3">
+                <div className="flex-1 min-w-[220px]">
+                  <div className="font-bold text-white">Buying a six-figure classic?</div>
+                  <p className="text-sm text-titanium">Our professional negotiators handle payment terms, deposits, and final pricing for you.</p>
+                </div>
+                <a href="https://buy.stripe.com/fZuaEX2itejSf978Xs1Nu0K" className="inline-flex items-center gap-2 bg-white text-racing-red px-5 py-2.5 rounded font-bold text-sm hover:bg-gold transition">Professional Negotiation — $149</a>
+              </div>
+            </div>
+
+            {/* Right — Sample valuation card (trust anchor) */}
+            <div className="bg-charcoal border border-white/15 rounded-2xl p-8 shadow-2xl">
+              <div className="text-[10px] font-black tracking-[0.2em] uppercase text-gold mb-4">Sample Valuation</div>
+              <h3 className="text-2xl font-black uppercase italic mb-6">1969 Chevrolet Camaro SS 396</h3>
+              <div className="space-y-3 mb-6">
+                <div className="flex justify-between items-center border-b border-white/10 pb-2"><span className="text-titanium">Fair</span><span className="font-black text-white">$58,000</span></div>
+                <div className="flex justify-between items-center border-b border-white/10 pb-2"><span className="text-titanium">Good</span><span className="font-black text-white">$72,500</span></div>
+                <div className="flex justify-between items-center border-b border-white/10 pb-2"><span className="text-titanium">Excellent</span><span className="font-black text-emerald-400">$91,000</span></div>
+              </div>
+              <div className="grid grid-cols-3 gap-3 text-xs mt-4">
+                <div className="bg-white/5 rounded p-3"><div className="text-gold font-bold mb-1">▲ +6.4%</div><div className="text-titanium">Market trend YoY</div></div>
+                <div className="bg-white/5 rounded p-3"><div className="text-gold font-bold mb-1">412</div><div className="text-titanium">Auction comps</div></div>
+                <div className="bg-white/5 rounded p-3"><div className="text-gold font-bold mb-1">High</div><div className="text-titanium">Rarity index</div></div>
+              </div>
+              <p className="text-sm text-titanium italic mt-5">"Looks to be one of the strongest appreciating segments of the market right now."</p>
+              <p className="text-[10px] text-titanium/60 mt-4">Footnote: illustrative sample only — your result is generated from your vehicle's specifics.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      
       <GarageShop onBuy={handleBuy} />
 
       {/* Merchandise Section — Shop Branded Gear */}

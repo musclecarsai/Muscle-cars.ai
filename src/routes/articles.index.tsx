@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { BookOpen, Clock, ChevronRight } from "lucide-react";
+import { ValuationOfferCard } from "../components/ValuationOfferCard";
 
 const ARTICLES = [
   {
@@ -97,6 +98,9 @@ function ArticlesList() {
 
       <section className="py-24">
         <div className="container mx-auto px-4">
+          <div className="max-w-md mx-auto mb-12 md:max-w-none md:grid md:grid-cols-2 md:gap-12 md:items-start">
+            <ValuationOfferCard />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             {ARTICLES.map((article) => (
               <Link 
