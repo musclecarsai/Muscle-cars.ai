@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { Clock, Calendar, ArrowLeft } from "lucide-react";
+import { ValuationOfferCard } from "../components/ValuationOfferCard";
 import { Link } from "@tanstack/react-router";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -152,6 +153,9 @@ function ArticlePage() {
                  Explore Marketplace
                </Link>
              </div>
+          </div>
+          <div className="mt-10">
+            <ValuationOfferCard />
           </div>
         </article>
       </div>
